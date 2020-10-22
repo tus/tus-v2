@@ -1,0 +1,7 @@
+<note title="Discussion Venues" removeInRFC="true">
+<t>Discussion of this document takes place on the
+  RESUMABLE Working Group mailing list (resumable@ietf.org),
+  which is archived at <eref target="https://mailarchive.ietf.org/arch/browse/resumable/"/>.</t>
+<t>Source for this draft and an issue tracker can be found at
+  <eref target="https://github.com/tus/tus-v2"/>.</t>
+</note>
