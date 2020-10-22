@@ -1,6 +1,6 @@
-# Resumable Upload Protocol
+# tus - Resumable Uploads Protocol
 
-This is the working area for the IETF [RESUMABLE Working Group](https://datatracker.ietf.org/wg/resumable/documents/) Internet-Draft, "Resumable Upload Protocol".
+This is the working area for the IETF [RESUMABLE Working Group](https://datatracker.ietf.org/wg/resumable/documents/) Internet-Draft, "tus - Resumable Uploads Protocol".
 
 * [Editor's Copy](https://tus.github.io/tus-v2/#go.draft-ietf-resumable-uploads-protocol.html)
 * [Working Group Draft](https://tools.ietf.org/html/draft-ietf-resumable-uploads-protocol)
