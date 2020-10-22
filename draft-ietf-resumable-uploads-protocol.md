@@ -1,5 +1,5 @@
 ---
-title: "Resumable Upload Protocol"
+title: "tus - Resumable Uploads Protocol"
 abbrev: "TODO - Abbreviation"
 docname: draft-ietf-resumable-uploads-protocol-latest
 category: info
