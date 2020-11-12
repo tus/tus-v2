@@ -45,11 +45,79 @@ This protocol specifies an approach for clients and servers to implement resumab
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14 {{RFC2119}} {{!RFC8174}} when, and only when, they appear in all capitals, as shown here.
 
-# Upload Procedure
+# Uploading Procedure
 
-In order to initiate a resumable upload, the client MUST send a `POST` request to a known upload URL, under which endpoint the server supports resumable uploads as laid out in this document. Possible approaches for the client to obtain this upload URL as presented in the section Service Discovery.
+The uploading of a file using the Resumable Uploads Protocol consists of multiple procedures:
+1. The Upload Creation Procedure sends a `POST` request to the server, notifying the server that the client wants to begin an upload. The server should then reserve the required resources to accept the upload from the client. The client also begins transferring the file in the request body.
+2. If the connection to the server gets intrrupted during the Upload Creation Procedure or the Upload Appending Procedure, the client may want to resume the upload. Before this is possible, the client must know the amount of data that the server was able to receive before the connection got interrupted. To achieve this, the client uses the Offset Retriving Procedure to obtain the upload's offset.
+3.
+4.
+
+## Upload Creation Procedure
+
+In order to initiate a resumable upload, the client MUST send a `POST` request to a known upload URL, under which endpoint the server supports resumable uploads as laid out in this document. Possible approaches for the client to obtain this upload URL as presented in the section Service Discovery. This `POST` request MUST include the Upload-Token header and have it set to a unique value (TODO: More constraint to ensure its uniqueness).
+
+```
+POST /uploads HTTP/1.1
+Host: example.org
+Upload-Token: abcdef
+Content-Length: …
+
+[file content]
+
+HTTP/1.1 204 No Content
+```
+
+## Offset Retriving Procedure
+
+```
+HEAD /uploads HTTP/1.1
+Host: example.org
+Upload-Token: abcdef
+Content-Length: 0
+
+
+HTTP/1.1 204 No Content
+Upload-Offset: 100
+```
+
+## Upload Appending Procedure
+
+```
+HEAD /uploads HTTP/1.1
+Host: example.org
+Upload-Token: abcdef
+Upload-Offset: 100
+
+[file content]
+
+HTTP/1.1 204 No Content
+Upload-Offset: 200
+```
+
+## Upload Cancellation Procedure
+
+```
+DELETE /uploads HTTP/1.1
+Host: example.org
+Upload-Token: abcdef
+Content-Length: 0
+
+
+HTTP/1.1 204 No Content
+```
+
+
 
 TODO: Request details
+
+# Header Fields
+
+# The Upload-Token Header Field
+
+# The Upload-Index Header Field
+
+# The Upload-Offset Header Field
 
 # Service Discovery
 
@@ -58,7 +126,6 @@ TODO Discovery using the `Alt-Svc` header and/or `HTTPSSVC` DNS record
 # Security Considerations
 
 TODO Security
-
 
 # IANA Considerations
 
