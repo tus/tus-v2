@@ -96,7 +96,7 @@ TODO: Request details
 TODO: Should interrupt other running PATCH requests
 
 ```
-HEAD /uploads HTTP/1.1
+PATCH /uploads HTTP/1.1
 Host: example.org
 Upload-Token: abcdef
 Upload-Offset: 100
