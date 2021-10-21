@@ -314,7 +314,7 @@ It is OPTIONAL for the server to partition upload tokens based on client identit
 
 This specification registers the following entry in the Permanent Message Header Field Names registry established by [RFC3864]:
 
-Header field name: Upload-Token, Upload-Offset
+Header field name: Upload-Token, Upload-Offset, Upload-Incomplete
 
 Applicable protocol: http
 
