@@ -123,7 +123,7 @@ The uploading of a file using the Resumable Uploads Protocol consists of multipl
      |                                            |
 ```
 
-For advanced use cases, the client is allowed to upload chunks to the server.
+For advanced use cases, the client is allowed to upload incomplete chunks of a file to the server sequentially.
 
 1) If the client is aware that the server supports resumable upload, it can use the Upload Transfer Procedure with the `Upload-Incomplete` header to start an upload.
 
@@ -160,7 +160,7 @@ For advanced use cases, the client is allowed to upload chunks to the server.
 
 The Upload Transfer Procedure can be used for either starting a new upload, or resuming an existing upload. A limited form of this procedure MAY be used by the client to start a new upload without the knowledge of server support.
 
-This procedure is designed to be compatible with a regular upload. Therefore all methods are allowed with the exception of `HEAD` and `DELETE`, and all response status codes are allowed. The client is RECOMMENDED to use `POST` request if not otherwise specified.
+This procedure is designed to be compatible with a regular upload. Therefore all methods are allowed with the exception of `GET`, `HEAD`, `DELETE`, and `OPTIONS`. And all response status codes are allowed. The client is RECOMMENDED to use `POST` request if not otherwise specified.
 
 The client MUST use the same method throughout an entire upload. The server SHOULD reject the attempt to resume an upload with a different method with `400 (Bad Request)` response.
 
@@ -172,7 +172,9 @@ If the end of the request body is not the end of the upload, the `Upload-Incompl
 
 The client MAY send the metadata of the file using headers such as `Content-Type` and `Content-Disposition` when starting a new upload. It is OPTIONAL for the client to repeat the metadata when resuming an upload.
 
-If the server has no record of the token but the offset is non-zero, it MUST respond with 404 (Not Found) status code. The server MUST terminate any ongoing Upload Transfer Procedure for the same token before processing the request body.
+If the server has no record of the token but the offset is non-zero, it MUST respond with 404 (Not Found) status code.
+
+The server MUST terminate any ongoing Upload Transfer Procedure for the same token before processing the request body.
 
 If the offset in the `Upload-Offset` header does not match the existing file size, the server MUST respond with 400 (Bad Request) status code.
 
@@ -225,7 +227,9 @@ If an upload is interrupted, the client MAY attempt to fetch the offset of the i
 
 The request MUST use the `HEAD` method and include the `Upload-Token` header. The request MUST NOT include the `Upload-Offset` header or the `Upload-Incomplete` header. The server MUST reject the request with the `Upload-Offset` header or the `Upload-Incomplete` header by sending a `400 (Bad Request)` response.
 
-If the server has resources allocated for this token, it MUST send back a `204 (No Content)` response with a header `Upload-Offset` which indicates the resumption offset for the client. The server MUST terminate any ongoing Upload Transfer Procedure for the same token before sending the response.
+If the server has resources allocated for this token, it MUST send back a `204 (No Content)` response with a header `Upload-Offset` which indicates the resumption offset for the client.
+
+The server MUST terminate any ongoing Upload Transfer Procedure for the same token before sending the response.
 
 The response SHOULD include `Cache-Control: no-store` header to prevent HTTP caching.
 
@@ -251,7 +255,9 @@ If the client wants to terminate the transfer without the ability to resume, it 
 
 The request MUST use the `DELETE` method and include the `Upload-Token` header. The request MUST NOT include the `Upload-Offset` header or the `Upload-Incomplete` header. The server MUST reject the request with the `Upload-Offset` header or the `Upload-Incomplete` header by sending a `400 (Bad Request)` response.
 
-If the server has successfully released the resources allocated for this token, it MUST send back a `204 (No Content)` response. The server MUST terminate any ongoing Upload Transfer Procedure for the same token before sending the response.
+If the server has successfully released the resources allocated for this token, it MUST send back a `204 (No Content)` response.
+
+The server MUST terminate any ongoing Upload Transfer Procedure for the same token before sending the response.
 
 If the server has no record of the token in `Upload-Token`, it MUST respond with `404 (Not Found)` status code.
 
