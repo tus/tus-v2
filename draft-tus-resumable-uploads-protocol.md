@@ -166,17 +166,17 @@ The client MUST use the same method throughout an entire upload. The server SHOU
 
 The request MUST include the `Upload-Token` header which uniquely identifies an upload.
 
-When resuming an upload, the `Upload-Offset` header MUST be set to the resumption offset. The resumption offset 0 indicates a new upload. The absence of the `Upload-Offset` header implies the resumption offset of 0.
+The request MUST include the `Upload-Offset` header. When resuming an upload, the `Upload-Offset` header MUST be set to the resumption offset. When a new upload is started, the value MUST be 0
 
-If the end of the request body is not the end of the upload, the `Upload-Incomplete` header MUST be set to true.
+If the end of the request body is not the end of the upload, the `Upload-Incomplete` header MUST be included and set to true.
 
 The client MAY send the metadata of the file using headers such as `Content-Type` and `Content-Disposition` when starting a new upload. It is OPTIONAL for the client to repeat the metadata when resuming an upload.
 
-If the server has no record of the token but the offset is non-zero, it MUST respond with 404 (Not Found) status code.
+If the server has no record of the token but the offset is non-zero, it MUST respond with `404 (Not Found)` status code.
 
 The server MUST terminate any ongoing Upload Transfer Procedure for the same token before processing the request body.
 
-If the offset in the `Upload-Offset` header does not match the existing file size, the server MUST respond with 400 (Bad Request) status code.
+If the offset in the `Upload-Offset` header does not match the existing file size, the server MUST respond with `409 (Conflict)` status code.
 
 If the request completes successfully and the entire file is received, the server MUST acknowledge it by responding with a successful status code between 200 and 299 (inclusive). Server is RECOMMENDED to use `201 (Created)` response if not otherwise specified. The response MUST NOT include the `Upload-Incomplete` header.
 
@@ -188,6 +188,7 @@ If the request completes successfully but the file is not complete yet indicated
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
+upload-offset: 0
 [file content]
 
 :status: 104
@@ -227,7 +228,7 @@ If an upload is interrupted, the client MAY attempt to fetch the offset of the i
 
 The request MUST use the `HEAD` method and include the `Upload-Token` header. The request MUST NOT include the `Upload-Offset` header or the `Upload-Incomplete` header. The server MUST reject the request with the `Upload-Offset` header or the `Upload-Incomplete` header by sending a `400 (Bad Request)` response.
 
-If the server has resources allocated for this token, it MUST send back a `204 (No Content)` response with a header `Upload-Offset` which indicates the resumption offset for the client.
+If the server has resources allocated for this token, it MUST send back a `204 (No Content)` response. The response MUST include the `Upload-Offset` header set to the current resumption offset for the client. The response MUST include the `Upload-Incomplete` header which is set to true if and only if the upload is complete. An upload is considered complete if and only if the server completely and succesfully received a corresponding Upload Transfer Request with a falsy `Upload-Incomplete` header
 
 The server MUST terminate any ongoing Upload Transfer Procedure for the same token before sending the response.
 
@@ -275,7 +276,7 @@ upload-token: :SGVs…SGU=:
 
 ## Upload-Token
 
-`Upload-Token` is an Item Structured Header. Its value MUST be either a byte sequence, a string, or a token, and its ABNF is
+`Upload-Token` is an Item Structured Header carrying the token used for identification of a specific upload. Its value MUST be either a byte sequence, a string, or a token, and its ABNF is
 
 ```
 Upload-Token = sf-binary / sf-string / sf-token
@@ -285,7 +286,7 @@ The value of the token SHOULD be a byte sequence with a minimum of 256-bit (16 b
 
 ## Upload-Offset
 
-`Upload-Offset` is an Item Structured Header. Its value MUST be an integer. Its ABNF is
+`Upload-Offset` is an Item Structured Header indicating the resumption offset of corresponding upload, counted in bytes. Its value MUST be an integer. Its ABNF is
 
 ```
 Upload-Offset = sf-integer
@@ -293,13 +294,11 @@ Upload-Offset = sf-integer
 
 ## Upload-Incomplete
 
-`Upload-Incomplete` is an Item Structured Header. Its value MUST be a boolean. Its ABNF is
+`Upload-Incomplete` is an Item Structured Header indicating whether the corresponding upload is considered complete. Its value MUST be a boolean. Its ABNF is
 
 ```
 Upload-Incomplete = sf-boolean
 ```
-
-The value of the `Upload-Incomplete` header MUST be true.
 
 # Redirection
 
