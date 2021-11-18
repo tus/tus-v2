@@ -164,7 +164,9 @@ This procedure is designed to be compatible with a regular upload. Therefore all
 
 The client MUST use the same method throughout an entire upload. The server SHOULD reject the attempt to resume an upload with a different method with `400 (Bad Request)` response.
 
-The request MUST include the `Upload-Token` header which uniquely identifies an upload.
+The client MUST NOT perform multiple Upload Transfer Procedures in parallel.
+
+The request MUST include the `Upload-Token` header which uniquely identifies an upload. The client MUST NOT reuse the token for a different upload.
 
 When resuming an upload, the `Upload-Offset` header MUST be set to the resumption offset. The resumption offset 0 indicates a new upload. The absence of the `Upload-Offset` header implies the resumption offset of 0.
 
@@ -174,7 +176,7 @@ The client MAY send the metadata of the file using headers such as `Content-Type
 
 If the server has no record of the token but the offset is non-zero, it MUST respond with 404 (Not Found) status code.
 
-The server MUST terminate any ongoing Upload Transfer Procedure for the same token before processing the request body.
+The server MUST terminate any ongoing Upload Transfer Procedure for the same token after validating the request headers before processing the request body. Since the client cannot perform multiple transfers in parallel, the server can assume that the previous attempt has already failed. Therefore, the server MAY abruptly terminate the previous HTTP connection or stream.
 
 If the offset in the `Upload-Offset` header does not match the existing file size, the server MUST respond with 400 (Bad Request) status code.
 
@@ -227,9 +229,11 @@ If an upload is interrupted, the client MAY attempt to fetch the offset of the i
 
 The request MUST use the `HEAD` method and include the `Upload-Token` header. The request MUST NOT include the `Upload-Offset` header or the `Upload-Incomplete` header. The server MUST reject the request with the `Upload-Offset` header or the `Upload-Incomplete` header by sending a `400 (Bad Request)` response.
 
+The client MUST NOT perform the Offset Retrieving Procedure while the Upload Transfer Procedures is in progress.
+
 If the server has resources allocated for this token, it MUST send back a `204 (No Content)` response with a header `Upload-Offset` which indicates the resumption offset for the client.
 
-The server MUST terminate any ongoing Upload Transfer Procedure for the same token before sending the response.
+The server MUST terminate any ongoing Upload Transfer Procedure for the same token before generating the offset. This ensures that the offset is accepted by a subsequent Upload Transfer Procedure. The server MAY terminate an ongoing Upload Transfer Procedure by abruptly terminating the HTTP connection or stream.
 
 The response SHOULD include `Cache-Control: no-store` header to prevent HTTP caching.
 
@@ -247,7 +251,7 @@ upload-offset: 100
 cache-control: no-store
 ```
 
-The client MAY automatically start uploading from the beginning using Upload Creation Procedure if `404 (Not Found)` status code is received. The client SHOULD NOT automatically retry if a status code other than 204 and 404 is received.
+The client MAY automatically start uploading from the beginning using Upload Transfer Procedure if `404 (Not Found)` status code is received. The client SHOULD NOT automatically retry if a status code other than 204 and 404 is received.
 
 ## Upload Cancellation Procedure
 
@@ -257,7 +261,7 @@ The request MUST use the `DELETE` method and include the `Upload-Token` header. 
 
 If the server has successfully released the resources allocated for this token, it MUST send back a `204 (No Content)` response.
 
-The server MUST terminate any ongoing Upload Transfer Procedure for the same token before sending the response.
+The server MAY terminate any ongoing Upload Transfer Procedure for the same token before sending the response by abruptly terminating the HTTP connection or stream.
 
 If the server has no record of the token in `Upload-Token`, it MUST respond with `404 (Not Found)` status code.
 
@@ -281,7 +285,9 @@ upload-token: :SGVs…SGU=:
 Upload-Token = sf-binary / sf-string / sf-token
 ```
 
-The value of the token SHOULD be a byte sequence with a minimum of 256-bit (16 byte) cryptographically-secure random binary data, or a cryptographic token with equivalent or stronger security properties.
+If not otherwise specified by the server, the client is RECOMMENDED to use 256-bit (32 bytes) cryptographically-secure random binary data as the value of the `Upload-Token`, in order to ensure that it is globally unique and non-guessable.
+
+A conforming implementation MUST be able to handle a `Upload-Token` field value of at least 128 octets.
 
 ## Upload-Offset
 
@@ -309,7 +315,7 @@ The 301 (Moved Permanently) status code and the 302 (Found) status code MUST NOT
 
 `Upload-Token` can be selected by the client which has no knowledge of tokens picked by other client, so uniqueness cannot be guaranteed. If the token is guessable, an attacker can append malicious data to ongoing uploads. To mitigate these issues, 256-bit cryptographically-secure random binary data is recommended for the token.
 
-It is OPTIONAL for the server to partition upload tokens based on client identity established through other channels, such as Cookie or TLS client authentication.
+It is OPTIONAL for the server to partition upload tokens based on client identity established through other channels, such as Cookie or TLS client authentication. The client MAY relax the token strength if it is aware of server-side partitioning.
 
 # IANA Considerations
 
