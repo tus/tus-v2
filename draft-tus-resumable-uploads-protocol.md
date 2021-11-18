@@ -1,3 +1,4 @@
+---
 title: tus - Resumable Uploads Protocol
 abbrev: TODO - Abbreviation
 docname: draft-tus-resumable-uploads-protocol-latest
@@ -57,103 +58,101 @@ The uploading of a file using the Resumable Uploads Protocol consists of multipl
 
 1) The Upload Transfer Procedure can be used to notify the server that the client wants to begin an upload. The server should then reserve the required resources to accept the upload from the client. The client also begins transferring the file in the request body. An informational response can be sent to the client to signal the support of resumable upload on the server.
 
-```
-+---------+                                  +---------+                                            
-| Client  |                                  | Server  |                                            
-+---------+                                  +---------+                                            
-     |                                            |                                                 
-     | POST with Upload-Token                     |                                                 
-     |------------------------------------------->|                                                 
-     |                                            |                                                 
-     |                                            | Reserve resources for Upload-Token              
-     |                                            |------------------------------------------------ 
-     |                                            |                                               | 
-     |                                            |<----------------------------------------------- 
-     |                                            |                                                 
-     |            104 Upload Resumption Supported |
-     |<-------------------------------------------|
-     |                                            |                                                 
-     | Flow Interrupted                           |                                                 
-     |------------------------------------------->|                                                 
-     |                                            |                                          
-```
+~~~
+Client                                  Server
+|                                            |
+| POST with Upload-Token                     |
+|------------------------------------------->|
+|                                            |
+|                                            | Reserve resources
+|                                            | for Upload-Token
+|                                            |------------------
+|                                            |                 |
+|                                            |<-----------------
+|                                            |
+|            104 Upload Resumption Supported |
+|<-------------------------------------------|
+|                                            |
+| Flow Interrupted                           |
+|------------------------------------------->|
+|                                            |
+~~~
+{: #fig-upload-transfer-procedure-init title="Upload Transfer Procedure Initiation"}
 
 2) If the connection to the server gets interrupted during the Upload Transfer Procedure, the client may want to resume the upload. Before this is possible, the client must know the amount of data that the server was able to receive before the connection got interrupted. To achieve this, the client uses the Offset Retrieving Procedure to obtain the upload's offset.
 
-```
-+---------+                                      +---------+
-| Client  |                                      | Server  |
-+---------+                                      +---------+
-     |                                                |
-     | HEAD with Upload-Token                         |
-     |----------------------------------------------->|
-     |                                                |
-     |              204 No Content with Upload-Offset |
-     |<-----------------------------------------------|
-     |                                                |
-```
+~~~
+Client                                      Server
+|                                                |
+| HEAD with Upload-Token                         |
+|----------------------------------------------->|
+|                                                |
+|              204 No Content with Upload-Offset |
+|<-----------------------------------------------|
+|                                                |
+~~~
+{: #fig-offset-retrieving-procedure title="Offset Retrieving Procedure"}
 
 3) After the Offset Retrieving Procedure completes, the client can resume the upload by sending the remaining file content to the server, appending to the already stored data in the upload.
 
-```
-+---------+                                 +---------+
-| Client  |                                 | Server  |
-+---------+                                 +---------+
-     |                                           |
-     |  POST with Upload-Token and Upload-Offset |
-     |------------------------------------------>|
-     |                                           |
-     |                 201 Created on completion |
-     |<------------------------------------------|
-     |                                           |
-```
+~~~
+Client                                      Server
+|                                                |
+| POST with Upload-Token and Upload-Offset       |
+|----------------------------------------------->|
+|                                                |
+|                      201 Created on completion |
+|<-----------------------------------------------|
+|                                                |
+~~~
+{: #fig-resuming-upload title="Resuming Upload"}
 
 4) If the client is not interesting in completing the upload anymore, it can instruct the server to delete the upload and free all related resources using the Upload Cancellation Procedure.
 
-```
-+---------+                                  +---------+
-| Client  |                                  | Server  |
-+---------+                                  +---------+
-     |                                            |
-     | DELETE with Upload-Token                   |
-     |------------------------------------------->|
-     |                                            |
-     |               204 No Content on completion |
-     |<-------------------------------------------|
-     |                                            |
-```
+~~~
+Client                                      Server
+|                                                |
+| DELETE with Upload-Token                       |
+|----------------------------------------------->|
+|                                                |
+|                   204 No Content on completion |
+|<-----------------------------------------------|
+|                                                |
+~~~
+{: #fig-upload-cancellation-procedure title="Upload Cancellation Procedure"}
 
 For advanced use cases, the client is allowed to upload incomplete chunks of a file to the server sequentially.
 
 1) If the client is aware that the server supports resumable upload, it can use the Upload Transfer Procedure with the `Upload-Incomplete` header to start an upload.
 
-```
-+---------+                                                     +---------+
-| Client  |                                                     | Server  |
-+---------+                                                     +---------+
-     |                                                               |
-     | PATCH with Upload-Token, Upload-Offset, and Upload-Incomplete |
-     |-------------------------------------------------------------->|
-     |                                                               |
-     |              201 Created with Upload-Incomplete on completion |
-     |<--------------------------------------------------------------|
-     |                                                               |
-```
+~~~
+Client                                      Server
+|                                                |
+| PATCH with Upload-Token, Upload-Offset,        |
+| and Upload-Incomplete                          |
+|----------------------------------------------->|
+|                                                |
+|             201 Created with Upload-Incomplete |
+|              on completion                     |
+|<-----------------------------------------------|
+|                                                |
+~~~
+{: #fig-upload-cancellation-procedure-usage title="Upload Transfer Procedure Usage"}
+
 
 2) The last chunk of the upload does not have the `Upload-Incomplete` header.
 
-```
-+---------+                                 +---------+
-| Client  |                                 | Server  |
-+---------+                                 +---------+
-     |                                           |
-     | PATCH with Upload-Token and Upload-Offset |
-     |------------------------------------------>|
-     |                                           |
-     |                 201 Created on completion |
-     |<------------------------------------------|
-     |                                           |
-```
+~~~
+Client                                      Server
+|                                                |
+| PATCH with Upload-Token and Upload-Offset      |
+|----------------------------------------------->|
+|                                                |
+|                      201 Created on completion |
+|<-----------------------------------------------|
+|                                                |
+~~~
+{: #fig-upload-cancellation-procedure-last-chunk title="Upload Transfer Procedure Last Chunk"}
 
 
 ## Upload Transfer Procedure
@@ -182,7 +181,7 @@ If the request completes successfully and the entire file is received, the serve
 
 If the request completes successfully but the file is not complete yet indicated by the `Upload-Incomplete` header, the server MUST acknowledge it by responding with the `201 (Created)` status code with the `Upload-Incomplete` header set to true.
 
-```
+~~~ example
 :method: POST
 :scheme: https
 :authority: example.com
@@ -193,9 +192,9 @@ upload-token: :SGVs…SGU=:
 :status: 104
 
 :status: 201
-```
+~~~
 
-```
+~~~ example
 :method: POST
 :scheme: https
 :authority: example.com
@@ -207,7 +206,7 @@ upload-incomplete: ?1
 
 :status: 201
 upload-incomplete: ?1
-```
+~~~
 
 The client MAY automatically attempt upload resumption when the connection is terminated unexpectedly, or if a server error status code between 500 and 599 (inclusive) is received. The client SHOULD NOT automatically retry if a client error status code between 400 and 499 (inclusive) is received.
 
@@ -235,7 +234,7 @@ The response SHOULD include `Cache-Control: no-store` header to prevent HTTP cac
 
 If the server has no record of this token, it MUST respond with `404 (Not Found)` status code.
 
-```
+~~~
 :method: HEAD
 :scheme: https
 :authority: example.com
@@ -245,7 +244,7 @@ upload-token: :SGVs…SGU=:
 :status: 204
 upload-offset: 100
 cache-control: no-store
-```
+~~~
 
 The client MAY automatically start uploading from the beginning using Upload Creation Procedure if `404 (Not Found)` status code is received. The client SHOULD NOT automatically retry if a status code other than 204 and 404 is received.
 
@@ -261,7 +260,7 @@ The server MUST terminate any ongoing Upload Transfer Procedure for the same tok
 
 If the server has no record of the token in `Upload-Token`, it MUST respond with `404 (Not Found)` status code.
 
-```
+~~~ example
 :method: DELETE
 :scheme: https
 :authority: example.com
@@ -269,7 +268,7 @@ If the server has no record of the token in `Upload-Token`, it MUST respond with
 upload-token: :SGVs…SGU=:
 
 :status: 204
-```
+~~~
 
 # Header Fields
 
@@ -277,9 +276,9 @@ upload-token: :SGVs…SGU=:
 
 `Upload-Token` is an Item Structured Header. Its value MUST be either a byte sequence, a string, or a token, and its ABNF is
 
-```
+~~~ abnf
 Upload-Token = sf-binary / sf-string / sf-token
-```
+~~~
 
 The value of the token SHOULD be a byte sequence with a minimum of 256-bit (16 byte) cryptographically-secure random binary data, or a cryptographic token with equivalent or stronger security properties.
 
@@ -287,17 +286,17 @@ The value of the token SHOULD be a byte sequence with a minimum of 256-bit (16 b
 
 `Upload-Offset` is an Item Structured Header. Its value MUST be an integer. Its ABNF is
 
-```
+~~~ abnf
 Upload-Offset = sf-integer
-```
+~~~
 
 ## Upload-Incomplete
 
 `Upload-Incomplete` is an Item Structured Header. Its value MUST be a boolean. Its ABNF is
 
-```
+~~~ abnf
 Upload-Incomplete = sf-boolean
-```
+~~~
 
 The value of the `Upload-Incomplete` header MUST be true.
 
@@ -313,7 +312,7 @@ It is OPTIONAL for the server to partition upload tokens based on client identit
 
 # IANA Considerations
 
-This specification registers the following entry in the Permanent Message Header Field Names registry established by [RFC3864]:
+This specification registers the following entry in the Permanent Message Header Field Names registry established by {{!RFC3864}}:
 
 Header field name: Upload-Token, Upload-Offset, Upload-Incomplete
 
