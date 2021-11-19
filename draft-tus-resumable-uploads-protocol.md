@@ -1,12 +1,12 @@
 ---
 title: tus - Resumable Uploads Protocol
-abbrev: TODO - Abbreviation
+abbrev: Resumable Uploads
 docname: draft-tus-resumable-uploads-protocol-latest
-category: info
+category: std
 
 ipr: trust200902
-area: General
-workgroup: TODO Working Group
+area: ART
+workgroup: HTTP
 keyword: Internet-Draft
 
 stand_alone: yes
