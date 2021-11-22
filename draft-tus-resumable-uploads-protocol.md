@@ -164,7 +164,7 @@ This procedure is designed to be compatible with a regular upload. Therefore all
 
 The client MUST use the same method throughout an entire upload. The server SHOULD reject the attempt to resume an upload with a different method with `400 (Bad Request)` response.
 
-The client MUST NOT perform multiple Upload Transfer Procedures in parallel.
+The client MUST NOT perform multiple Upload Transfer Procedures for the same file in parallel.
 
 The request MUST include the `Upload-Token` header which uniquely identifies an upload. The client MUST NOT reuse the token for a different upload.
 
