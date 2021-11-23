@@ -14,19 +14,26 @@ smart_quotes: no
 pi: [toc, sortrefs, symrefs]
 
 author:
- -
+  -
     ins: M. Kleidl
     name: Marius Kleidl
     organization: Transloadit Ltd
     email: marius@transloadit.com
+  -
     ins: J. Mehta
     name: Jiten Mehta
     organization: Apple Inc.
     email: jmehta@apple.com
+  -
     ins: G. Zhang
     name: Guoye Zhang
     organization: Apple Inc.
     email: guoye_zhang@apple.com
+  -
+    ins: L. Pardue
+    name: Lucas Pardue
+    organization: Cloudflare
+    email: lucaspardue.24.7@gmail.com
 
 normative:
   RFC2119:
