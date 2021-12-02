@@ -35,6 +35,12 @@ author:
     organization: Cloudflare
     email: lucaspardue.24.7@gmail.com
 
+  -
+    ins: S. Matsson
+    name: Stefan Matsson
+    organization: JellyHive
+    email: s.matsson@gmail.com
+
 normative:
   RFC2119:
 
@@ -266,6 +272,8 @@ If the server has successfully released the resources allocated for this token, 
 The server MUST terminate any ongoing Upload Transfer Procedure for the same token before sending the response.
 
 If the server has no record of the token in `Upload-Token`, it MUST respond with `404 (Not Found)` status code.
+
+If the server does not support cancellation, it MUST respond with `405 (Method Not Allowed)` status code.
 
 ~~~ example
 :method: DELETE
