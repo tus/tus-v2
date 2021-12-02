@@ -65,7 +65,7 @@ This protocol specifies an approach for clients and servers to implement resumab
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14 {{RFC2119}} {{!RFC8174}} when, and only when, they appear in all capitals, as shown here.
 
-# Uploading Procedure
+# Uploading Overview
 
 The uploading of a file using the Resumable Uploads Protocol consists of multiple procedures:
 
@@ -168,7 +168,7 @@ Client                                      Server
 {: #fig-upload-cancellation-procedure-last-chunk title="Upload Transfer Procedure Last Chunk"}
 
 
-## Upload Transfer Procedure
+# Upload Transfer Procedure
 
 The Upload Transfer Procedure can be used for either starting a new upload, or resuming an existing upload. A limited form of this procedure MAY be used by the client to start a new upload without the knowledge of server support.
 
@@ -223,7 +223,7 @@ upload-incomplete: ?1
 
 The client MAY automatically attempt upload resumption when the connection is terminated unexpectedly, or if a server error status code between 500 and 599 (inclusive) is received. The client SHOULD NOT automatically retry if a client error status code between 400 and 499 (inclusive) is received.
 
-### Feature Detection
+## Feature Detection
 
 If the client has no knowledge of whether the server supports resumable upload, the Upload Transfer Procedure MAY be used with some additional constraints. In particular, the `Upload-Offset` header and the `Upload-Incomplete` header MUST NOT be sent in the request if the server support is unclear. This allows the upload to function as if it is a regular upload.
 
@@ -233,7 +233,7 @@ The client MUST NOT attempt to resume an upload if it did not receive the `104 (
 
 If the client is aware of the server support, it SHOULD start an upload with the `Upload-Offset` header set to 0 in order to prevent the unnecessary informational response.
 
-## Offset Retrieving Procedure
+# Offset Retrieving Procedure
 
 If an upload is interrupted, the client MAY attempt to fetch the offset of the incomplete upload by sending a `HEAD` request to the server with the same `Upload-Token`. The client MUST NOT initiate this procedure without the knowledge of server support.
 
@@ -261,7 +261,7 @@ cache-control: no-store
 
 The client MAY automatically start uploading from the beginning using Upload Creation Procedure if `404 (Not Found)` status code is received. The client SHOULD NOT automatically retry if a status code other than 204 and 404 is received.
 
-## Upload Cancellation Procedure
+# Upload Cancellation Procedure
 
 If the client wants to terminate the transfer without the ability to resume, it MAY send a `DELETE` request to the server along with the `Upload-Token` which is an indication that the client is no longer interested in uploading this body and the server can release resources associated with this token. The client MUST NOT initiate this procedure without the knowledge of server support.
 
