@@ -181,7 +181,7 @@ This procedure is designed to be compatible with a regular upload. Therefore all
 
 The client MUST use the same method throughout an entire upload. The server SHOULD reject the attempt to resume an upload with a different method with `400 (Bad Request)` response.
 
-The client MUST NOT perform multiple Upload Transfer Procedures for the same file in parallel.
+The client MUST NOT perform multiple Upload Transfer Procedures ({{upload-transfer}}) for the same file in parallel.
 
 The request MUST include the `Upload-Token` header field ({{upload-token}}) which uniquely identifies an upload. The client MUST NOT reuse the token for a different upload.
 
@@ -246,11 +246,11 @@ If an upload is interrupted, the client MAY attempt to fetch the offset of the i
 
 The request MUST use the `HEAD` method and include the `Upload-Token` header. The request MUST NOT include the `Upload-Offset` header or the `Upload-Incomplete` header. The server MUST reject the request with the `Upload-Offset` header or the `Upload-Incomplete` header by sending a `400 (Bad Request)` response.
 
-The client MUST NOT perform the Offset Retrieving Procedure while the Upload Transfer Procedures is in progress.
+The client MUST NOT perform the Offset Retrieving Procedure ({{offset-retrieving}}) while the Upload Transfer Procedures ({{upload-transfer}}) is in progress.
 
 If the server has resources allocated for this token, it MUST send back a `204 (No Content)` response with a header `Upload-Offset` which indicates the resumption offset for the client.
 
-The server MUST terminate any ongoing Upload Transfer Procedure for the same token before generating the offset. This ensures that the offset is accepted by a subsequent Upload Transfer Procedure. The server MAY terminate an ongoing Upload Transfer Procedure by abruptly terminating the HTTP connection or stream.
+The server MUST terminate any ongoing Upload Transfer Procedure ({{upload-transfer}}) for the same token before generating the offset. This ensures that the offset is accepted by a subsequent Upload Transfer Procedure. The server MAY terminate an ongoing Upload Transfer Procedure by abruptly terminating the HTTP connection or stream.
 
 The response SHOULD include `Cache-Control: no-store` header to prevent HTTP caching.
 
@@ -268,7 +268,7 @@ upload-offset: 100
 cache-control: no-store
 ~~~
 
-The client MAY automatically start uploading from the beginning using Upload Transfer Procedure if `404 (Not Found)` status code is received. The client SHOULD NOT automatically retry if a status code other than 204 and 404 is received.
+The client MAY automatically start uploading from the beginning using Upload Transfer Procedure ({{upload-transfer}}) if `404 (Not Found)` status code is received. The client SHOULD NOT automatically retry if a status code other than 204 and 404 is received.
 
 # Upload Cancellation Procedure {#upload-cancellation}
 
