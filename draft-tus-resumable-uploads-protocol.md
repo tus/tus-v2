@@ -1,12 +1,12 @@
 ---
 title: tus - Resumable Uploads Protocol
-abbrev: TODO - Abbreviation
+abbrev: Resumable Uploads
 docname: draft-tus-resumable-uploads-protocol-latest
-category: info
+category: std
 
 ipr: trust200902
-area: General
-workgroup: TODO Working Group
+area: ART
+workgroup: HTTP
 keyword: Internet-Draft
 
 stand_alone: yes
@@ -14,19 +14,32 @@ smart_quotes: no
 pi: [toc, sortrefs, symrefs]
 
 author:
- -
+  -
     ins: M. Kleidl
     name: Marius Kleidl
     organization: Transloadit Ltd
     email: marius@transloadit.com
+  -
     ins: J. Mehta
     name: Jiten Mehta
     organization: Apple Inc.
     email: jmehta@apple.com
+  -
     ins: G. Zhang
     name: Guoye Zhang
     organization: Apple Inc.
     email: guoye_zhang@apple.com
+  -
+    ins: L. Pardue
+    name: Lucas Pardue
+    organization: Cloudflare
+    email: lucaspardue.24.7@gmail.com
+
+  -
+    ins: S. Matsson
+    name: Stefan Matsson
+    organization: JellyHive
+    email: s.matsson@gmail.com
 
 normative:
   RFC2119:
@@ -57,7 +70,7 @@ The terms byte sequence, Item, string, sf-binary, sf-boolean, sf-integer, sf-str
 
 The terms client and server are imported from {{HTTP}}.
 
-# Uploading Procedure
+# Uploading Overview
 
 The uploading of a file using the Resumable Uploads Protocol consists of multiple procedures:
 
@@ -160,7 +173,7 @@ Client                                      Server
 {: #fig-upload-cancellation-procedure-last-chunk title="Upload Transfer Procedure Last Chunk"}
 
 
-## Upload Transfer Procedure {#upload-transfer}
+# Upload Transfer Procedure {#upload-transfer}
 
 The Upload Transfer Procedure can be used for either starting a new upload, or resuming an existing upload. A limited form of this procedure MAY be used by the client to start a new upload without the knowledge of server support.
 
@@ -215,7 +228,7 @@ upload-incomplete: ?1
 
 The client MAY automatically attempt upload resumption when the connection is terminated unexpectedly, or if a server error status code between 500 and 599 (inclusive) is received. The client SHOULD NOT automatically retry if a client error status code between 400 and 499 (inclusive) is received.
 
-### Feature Detection
+## Feature Detection
 
 If the client has no knowledge of whether the server supports resumable upload, the Upload Transfer Procedure MAY be used with some additional constraints. In particular, the `Upload-Offset` header field ({{upload-offset}}) and the `Upload-Incomplete` header field ({{upload-incomplete}}) MUST NOT be sent in the request if the server support is unclear. This allows the upload to function as if it is a regular upload.
 
@@ -225,7 +238,7 @@ The client MUST NOT attempt to resume an upload if it did not receive the `104 (
 
 If the client is aware of the server support, it SHOULD start an upload with the `Upload-Offset` header set to 0 in order to prevent the unnecessary informational response.
 
-## Offset Retrieving Procedure {#offset-retrieving}
+# Offset Retrieving Procedure {#offset-retrieving}
 
 If an upload is interrupted, the client MAY attempt to fetch the offset of the incomplete upload by sending a `HEAD` request to the server with the same `Upload-Token` header field ({{upload-token}}). The client MUST NOT initiate this procedure without the knowledge of server support.
 
@@ -253,7 +266,7 @@ cache-control: no-store
 
 The client MAY automatically start uploading from the beginning using Upload Creation Procedure if `404 (Not Found)` status code is received. The client SHOULD NOT automatically retry if a status code other than 204 and 404 is received.
 
-## Upload Cancellation Procedure {#upload-cancellation}
+# Upload Cancellation Procedure {#upload-cancellation}
 
 If the client wants to terminate the transfer without the ability to resume, it MAY send a `DELETE` request to the server along with the `Upload-Token` which is an indication that the client is no longer interested in uploading this body and the server can release resources associated with this token. The client MUST NOT initiate this procedure without the knowledge of server support.
 
@@ -264,6 +277,8 @@ If the server has successfully released the resources allocated for this token, 
 The server MUST terminate any ongoing Upload Transfer Procedure ({{upload-transfer}}) for the same token before sending the response.
 
 If the server has no record of the token in `Upload-Token`, it MUST respond with `404 (Not Found)` status code.
+
+If the server does not support cancellation, it MUST respond with `405 (Method Not Allowed)` status code.
 
 ~~~ example
 :method: DELETE
