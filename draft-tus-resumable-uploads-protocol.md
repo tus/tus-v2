@@ -193,9 +193,9 @@ The client MAY send the metadata of the file using headers such as `Content-Type
 
 If the server has no record of the token but the offset is non-zero, it MUST respond with 404 (Not Found) status code.
 
-The server MUST terminate any ongoing Upload Transfer Procedure for the same token after validating the request headers before processing the request body. Since the client cannot perform multiple transfers in parallel, the server can assume that the previous attempt has already failed. Therefore, the server MAY abruptly terminate the previous HTTP connection or stream.
+The server MAY terminate any ongoing Upload Transfer Procedure ({{upload-transfer}}) for the same token. Since the client is not allowed to perform multiple transfers in parallel, the server can assume that the previous attempt has already failed. Therefore, the server MAY abruptly terminate the previous HTTP connection or stream.
 
-If the offset in the `Upload-Offset` header field does not match the existing file size, the server MUST respond with 400 (Bad Request) status code.
+If the offset in the `Upload-Offset` header field does not match the value 0, the offset provided by the immediate previous Offset Retrieving Procedure ({{offset-retrieving}}), or the end offset of the immediate previous incomplete transfer, the server MUST respond with 400 (Bad Request) status code.
 
 If the request completes successfully and the entire file is received, the server MUST acknowledge it by responding with a successful status code between 200 and 299 (inclusive). Server is RECOMMENDED to use `201 (Created)` response if not otherwise specified. The response MUST NOT include the `Upload-Incomplete` header.
 
@@ -250,11 +250,13 @@ The client MUST NOT perform the Offset Retrieving Procedure ({{offset-retrieving
 
 If the server has resources allocated for this token, it MUST send back a `204 (No Content)` response with a header `Upload-Offset` which indicates the resumption offset for the client.
 
-The server MUST terminate any ongoing Upload Transfer Procedure ({{upload-transfer}}) for the same token before generating the offset. This ensures that the offset is accepted by a subsequent Upload Transfer Procedure. The server MAY terminate an ongoing Upload Transfer Procedure by abruptly terminating the HTTP connection or stream.
+The offset MUST be accepted by a subsequent Upload Transfer Procedure ({{upload-transfer}}). Due to network delay and reordering, the server might still be receiving data from an ongoing transfer for the same token, which in the client perspective has failed. The server MAY terminate any transfers for the same token before sending the response by abruptly terminating the HTTP connection or stream. Alternatively, the server MAY keep the ongoing transfer alive but ignore further bytes received past the offset.
 
 The response SHOULD include `Cache-Control: no-store` header to prevent HTTP caching.
 
 If the server has no record of this token, it MUST respond with `404 (Not Found)` status code.
+
+The client MUST NOT start more than one Upload Transfer Procedures ({{upload-transfer}}) based on the resumption offset from a single Offset Retrieving Procedure ({{offset-retrieving}}).
 
 ~~~
 :method: HEAD
