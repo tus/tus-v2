@@ -298,7 +298,7 @@ upload-token: :SGVs…SGU=:
 
 ## Upload-Token
 
-`Upload-Token` is an Item Structured Header (see {{Section 3.3 of STRUCTURED-FIELDS}}). Its value MUST be either a byte sequence, a string, or a token, and its ABNF is
+The `Upload-Token` request header field is an Item Structured Header (see {{Section 3.3 of STRUCTURED-FIELDS}}). Its value MUST be either a byte sequence, a string, or a token, and its ABNF is
 
 ~~~ abnf
 Upload-Token = sf-binary / sf-string / sf-token
@@ -310,7 +310,7 @@ A conforming implementation MUST be able to handle a `Upload-Token` field value 
 
 ## Upload-Offset
 
-`Upload-Offset` is an Item Structured Header. Its value MUST be an integer. Its ABNF is
+The `Upload-Offset` request and response header field is an Item Structured Header. Its value MUST be an integer. Its ABNF is
 
 ~~~ abnf
 Upload-Offset = sf-integer
@@ -318,7 +318,7 @@ Upload-Offset = sf-integer
 
 ## Upload-Incomplete
 
-`Upload-Incomplete` is an Item Structured Header. Its value MUST be a boolean. Its ABNF is
+The `Upload-Incomplete` request and response header field is an Item Structured Header. Its value MUST be a boolean. Its ABNF is
 
 ~~~ abnf
 Upload-Incomplete = sf-boolean
