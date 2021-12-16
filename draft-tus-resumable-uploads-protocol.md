@@ -166,7 +166,7 @@ The client MUST use the same method throughout an entire upload. The server SHOU
 
 The request MUST include the `Upload-Token` header which uniquely identifies an upload.
 
-The request MUST include the `Upload-Offset` header. When resuming an upload, the `Upload-Offset` header MUST be set to the resumption offset. When a new upload is started, the value MUST be 0
+The request MUST include the `Upload-Offset` header. When resuming an upload, the `Upload-Offset` header MUST be set to the resumption offset. When a new upload is started, the value MUST be 0.
 
 If the end of the request body is not the end of the upload, the `Upload-Incomplete` header MUST be included and set to true.
 
@@ -228,7 +228,7 @@ If an upload is interrupted, the client MAY attempt to fetch the offset of the i
 
 The request MUST use the `HEAD` method and include the `Upload-Token` header. The request MUST NOT include the `Upload-Offset` header or the `Upload-Incomplete` header. The server MUST reject the request with the `Upload-Offset` header or the `Upload-Incomplete` header by sending a `400 (Bad Request)` response.
 
-If the server has resources allocated for this token, it MUST send back a `204 (No Content)` response. The response MUST include the `Upload-Offset` header set to the current resumption offset for the client. The response MUST include the `Upload-Incomplete` header which is set to true if and only if the upload is complete. An upload is considered complete if and only if the server completely and succesfully received a corresponding Upload Transfer Request with a falsy `Upload-Incomplete` header
+If the server has resources allocated for this token, it MUST send back a `204 (No Content)` response. The response MUST include the `Upload-Offset` header set to the current resumption offset for the client. The response MUST include the `Upload-Incomplete` header which is set to true if and only if the upload is incomplete. An upload is considered complete if and only if the server completely and succesfully received a corresponding Upload Transfer Request with a falsy `Upload-Incomplete` header
 
 The server MUST terminate any ongoing Upload Transfer Procedure for the same token before sending the response.
 
