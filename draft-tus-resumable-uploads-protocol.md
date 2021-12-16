@@ -301,7 +301,7 @@ upload-token: :SGVs…SGU=:
 `Upload-Token` is an Item Structured Header (see {{Section 3.3 of STRUCTURED-FIELDS}}). Its value MUST be either a byte sequence, a string, or a token, and its ABNF is
 
 ~~~ abnf
-Upload-Token = sf-binary / sf-string / sf-token
+Upload-Token = sf-binary
 ~~~
 
 If not otherwise specified by the server, the client is RECOMMENDED to use 256-bit (32 bytes) cryptographically-secure random binary data as the value of the `Upload-Token`, in order to ensure that it is globally unique and non-guessable.
