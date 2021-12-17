@@ -163,7 +163,7 @@ Client                                      Server
 ~~~
 Client                                      Server
 |                                                |
-| POST with Upload-Token and Upload-Offset      |
+| POST with Upload-Token and Upload-Offset       |
 |----------------------------------------------->|
 |                                                |
 |                      201 Created on completion |
