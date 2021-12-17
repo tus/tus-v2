@@ -146,7 +146,7 @@ For advanced use cases, the client is allowed to upload incomplete chunks of a f
 ~~~
 Client                                      Server
 |                                                |
-| PATCH with Upload-Token, Upload-Offset,        |
+| POST with Upload-Token, Upload-Offset,         |
 | and Upload-Incomplete                          |
 |----------------------------------------------->|
 |                                                |
@@ -163,7 +163,7 @@ Client                                      Server
 ~~~
 Client                                      Server
 |                                                |
-| PATCH with Upload-Token and Upload-Offset      |
+| POST with Upload-Token and Upload-Offset      |
 |----------------------------------------------->|
 |                                                |
 |                      201 Created on completion |
