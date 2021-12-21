@@ -189,7 +189,7 @@ When resuming an upload, the `Upload-Offset` header field ({{upload-offset}}) MU
 
 If the end of the request body is not the end of the upload, the `Upload-Incomplete` header field ({{upload-incomplete}}) MUST be set to true.
 
-The client MAY send the metadata of the file using headers such as `Content-Type` (see {{Section 8.3 of HTTP}} and `Content-Disposition` {{!RFC6266}} when starting a new upload. It is OPTIONAL for the client to repeat the metadata when resuming an upload.
+The client MAY send additional metadata using headers such as `Content-Type` (see {{Section 8.3 of HTTP}} and `Content-Disposition` {{!RFC6266}} when starting a new upload. The server MAY chose to use the metadata for further processing.
 
 If the server has no record of the token but the offset is non-zero, it MUST respond with 404 (Not Found) status code.
 
