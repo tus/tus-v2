@@ -181,9 +181,9 @@ This procedure is designed to be compatible with a regular upload. Therefore all
 
 The client MUST use the same method throughout an entire upload. The server SHOULD reject the attempt to resume an upload with a different method with `400 (Bad Request)` response.
 
-The client MUST NOT perform multiple Upload Transfer Procedures ({{upload-transfer}}) for the same file in parallel.
-
 The request MUST include the `Upload-Token` header field ({{upload-token}}) which uniquely identifies an upload. The client MUST NOT reuse the token for a different upload.
+
+The client MUST NOT perform multiple Upload Transfer Procedures ({{upload-transfer}}) for the same token in parallel.
 
 When resuming an upload, the `Upload-Offset` header field ({{upload-offset}}) MUST be set to the resumption offset. The resumption offset 0 indicates a new upload. The absence of the `Upload-Offset` header field implies the resumption offset of 0.
 
@@ -197,9 +197,9 @@ The server MAY terminate any ongoing Upload Transfer Procedure ({{upload-transfe
 
 If the offset in the `Upload-Offset` header field does not match the value 0, the offset provided by the immediate previous Offset Retrieving Procedure ({{offset-retrieving}}), or the end offset of the immediate previous incomplete transfer, the server MUST respond with 400 (Bad Request) status code.
 
-If the request completes successfully and the entire file is received, the server MUST acknowledge it by responding with a successful status code between 200 and 299 (inclusive). Server is RECOMMENDED to use `201 (Created)` response if not otherwise specified. The response MUST NOT include the `Upload-Incomplete` header.
+If the request completes successfully and the entire upload is complete, the server MUST acknowledge it by responding with a successful status code between 200 and 299 (inclusive). Server is RECOMMENDED to use `201 (Created)` response if not otherwise specified. The response MUST NOT include the `Upload-Incomplete` header with the value of true.
 
-If the request completes successfully but the file is not complete yet indicated by the `Upload-Incomplete` header, the server MUST acknowledge it by responding with the `201 (Created)` status code with the `Upload-Incomplete` header set to true.
+If the request completes successfully but the entire upload is not yet complete indicated by the `Upload-Incomplete` header, the server MUST acknowledge it by responding with the `201 (Created)` status code and the `Upload-Incomplete` header set to true.
 
 ~~~ example
 :method: POST
@@ -207,7 +207,7 @@ If the request completes successfully but the file is not complete yet indicated
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
-[file content]
+[content]
 
 :status: 104
 
@@ -222,7 +222,7 @@ upload-token: :SGVs…SGU=:
 upload-token: :SGVs…SGU=:
 upload-offset: 0
 upload-incomplete: ?1
-[partial file content]
+[partial content]
 
 :status: 201
 upload-incomplete: ?1
