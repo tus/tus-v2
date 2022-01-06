@@ -368,3 +368,13 @@ Specification: This document
 {:numbered="false"}
 
 TODO acknowledge.
+
+# Appendix
+
+## Informational Response
+
+The server is allowed to respond to Upload Transfer Procedure ({{upload-transfer}}) requests with a `104 (Upload Resumption Supported)` intermediate response as soon as the server has validated the request. This way, the client knows that the server supports resumable uploads before the complete response for the Upload Transfer Procedure is received. The benefit is the clients can defer starting the actual data transfer until the server indicates full support of the incoming Upload Transfer Procedure (i.e. resumable are supported, the provided upload token is active etc).
+
+On the contrary, support for intermediate responses (the `1XX` range) in existing software is limited or not at all present. Such software includes proxies, firewalls, browsers, and HTTP libraries for clients and server. Therefore, the `104 (Upload Resumption Supported)` status code is optional and not mandatory for the successful completion of an upload. Otherwise, it might be impossible in some cases to implement resumable upload servers using existing software packages. Furthermore, as parts of the current internet infrastructure currently have limited support for intermediate responses, a successful delivery of a `104 (Upload Resumption Supported)` from the server to the client should be assumed.
+
+We hope that support for intermediate responses increases in the near future, to allow a wider usage of `104 (Upload Resumption Supported)`.
