@@ -240,6 +240,14 @@ The client MUST NOT attempt to resume an upload if it did not receive the `104 (
 
 If the client is aware of the server support, it SHOULD start an upload with the `Upload-Offset` header set to 0 in order to prevent the unnecessary informational response.
 
+### Draft Version Identification
+
+> **RFC Editor's Note:**  Please remove this section prior to publication of a final version of this document.
+
+Server implementations of draft versions of the protocol MUST send a header field `Upload-Draft-Version` with the corresponding draft number as its value to the `104 (Upload Resumption Supported)` informational response. For example, draft-tus-resumable-uploads-protocol-01 is identified using the header field `Upload-Draft-Version: 1`.
+
+Client implementations of draft versions of the protocol MUST ignore a `104 (Upload Resumption Supported)` informational response with missing or mismatching draft version indicated by the `Upload-Draft-Version` header field.
+
 # Offset Retrieving Procedure {#offset-retrieving}
 
 If an upload is interrupted, the client MAY attempt to fetch the offset of the incomplete upload by sending a `HEAD` request to the server with the same `Upload-Token` header field ({{upload-token}}). The client MUST NOT initiate this procedure without the knowledge of server support.
