@@ -34,7 +34,6 @@ author:
     name: Lucas Pardue
     organization: Cloudflare
     email: lucaspardue.24.7@gmail.com
-
   -
     ins: S. Matsson
     name: Stefan Matsson
@@ -74,7 +73,7 @@ The terms client and server are imported from {{HTTP}}.
 
 The uploading of a file using the Resumable Uploads Protocol consists of multiple procedures:
 
-1) The Upload Transfer Procedure ({{upload-transfer}}) can be used to notify the server that the client wants to begin an upload. The server should then reserve the required resources to accept the upload from the client. The client also begins transferring the file in the request body. An informational response can be sent to the client to signal the support of resumable upload on the server.
+1) The Upload Transfer Procedure ({{upload-transfer}}) can be used to notify the server that the client wants to begin an upload. The server should then reserve the required resources to accept the upload from the client. The client also begins transferring the entire file in the request body. The request includes the Upload-Token header, which is used for identifying future requests related to this upload. An informational response can be sent to the client to signal the support of resumable upload on the server.
 
 ~~~
 Client                                  Server
@@ -97,7 +96,7 @@ Client                                  Server
 ~~~
 {: #fig-upload-transfer-procedure-init title="Upload Transfer Procedure Initiation"}
 
-2) If the connection to the server gets interrupted during the Upload Transfer Procedure, the client may want to resume the upload. Before this is possible, the client must know the amount of data that the server was able to receive before the connection got interrupted. To achieve this, the client uses the Offset Retrieving Procedure to obtain the upload's offset.
+2) If the connection to the server gets interrupted during the Upload Transfer Procedure, the client may want to resume the upload. Before this is possible, the client must know the amount of data that the server was able to receive before the connection got interrupted. To achieve this, the client uses the Offset Retrieving Procedure ({{offset-retrieving}}) to obtain the upload's offset.
 
 ~~~
 Client                                      Server
@@ -111,7 +110,7 @@ Client                                      Server
 ~~~
 {: #fig-offset-retrieving-procedure title="Offset Retrieving Procedure"}
 
-3) After the Offset Retrieving Procedure ({{offset-retrieving}}) completes, the client can resume the upload by sending the remaining file content to the server, appending to the already stored data in the upload.
+3) After the Offset Retrieving Procedure ({{offset-retrieving}}) completes, the client can resume the upload by sending the remaining file content to the server, appending to the already stored data in the upload. The `Upload-Offset` value is included to ensure that the client and server agree on the offset that the upload resumes from.
 
 ~~~
 Client                                      Server
@@ -139,7 +138,7 @@ Client                                      Server
 ~~~
 {: #fig-upload-cancellation-procedure title="Upload Cancellation Procedure"}
 
-For advanced use cases, the client is allowed to upload incomplete chunks of a file to the server sequentially.
+In the above example, the client attempted to upload the entire file in a single request, indicated by omitting the `Upload-Incomplete` header. For advanced use cases, the client is allowed to upload incomplete chunks of a file to the server sequentially. One example is the uploading of a streaming data source which is not yet completely read yet:
 
 1) If the client is aware that the server supports resumable upload, it can use the Upload Transfer Procedure with the `Upload-Incomplete` header to start an upload.
 
@@ -157,7 +156,6 @@ Client                                      Server
 ~~~
 {: #fig-upload-cancellation-procedure-usage title="Upload Transfer Procedure Usage"}
 
-
 2) The last chunk of the upload does not have the `Upload-Incomplete` header.
 
 ~~~
@@ -172,6 +170,7 @@ Client                                      Server
 ~~~
 {: #fig-upload-cancellation-procedure-last-chunk title="Upload Transfer Procedure Last Chunk"}
 
+This overview section talked about uploading files, as this is a common use case. However, this protocol also support uploading of streaming data sources, such as live video streams. Therefore, this document extends its terminology to include all data sources and instead refers to _uploads_ instead of _files_.
 
 # Upload Transfer Procedure {#upload-transfer}
 
