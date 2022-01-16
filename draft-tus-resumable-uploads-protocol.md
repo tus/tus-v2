@@ -219,11 +219,12 @@ upload-token: :SGVs…SGU=:
 upload-token: :SGVs…SGU=:
 upload-offset: 0
 upload-incomplete: ?1
-[partial content]
+content-length: 25
+[partial content (25 bytes)]
 
 :status: 201
 upload-incomplete: ?1
-upload-offset: [new offset]
+upload-offset: 25
 ~~~
 
 The client MAY automatically attempt upload resumption when the connection is terminated unexpectedly, or if a server error status code between 500 and 599 (inclusive) is received. The client SHOULD NOT automatically retry if a client error status code between 400 and 499 (inclusive) is received.
