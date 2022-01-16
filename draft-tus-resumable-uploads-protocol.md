@@ -177,7 +177,7 @@ Client                                      Server
 
 The Upload Transfer Procedure is intended for transferring the data chunk. As such, it can be used for either resuming an existing upload, or starting a new upload. A limited form of this procedure MAY be used by the client to start a new upload without the knowledge of server support.
 
-This procedure is designed to be compatible with a regular upload. Therefore all methods are allowed with the exception of `GET`, `HEAD`, `DELETE`, and `OPTIONS`. And all response status codes are allowed. The client is RECOMMENDED to use the `POST` method if not otherwise intended. The server MAY only support a limited number of methods.
+This procedure is designed to be compatible with a regular upload. Therefore all methods are allowed with the exception of `GET`, `HEAD`, `DELETE`, and `OPTIONS`. All response status codes are allowed. The client is RECOMMENDED to use the `POST` method if not otherwise intended. The server MAY only support a limited number of methods.
 
 The client MUST use the same method throughout an entire upload. The server SHOULD reject the attempt to resume an upload with a different method with `400 (Bad Request)` response.
 
