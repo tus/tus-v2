@@ -382,14 +382,15 @@ On the contrary, support for intermediate responses (the `1XX` range) in existin
 We hope that support for intermediate responses increases in the near future, to allow a wider usage of `104 (Upload Resumption Supported)`.
 
 ## Feature Detection
+{:numbered="false"}
 
 This specification includes a section about feature detection (it was called service discovery in earlier discussions, but this name is probably ill-suited). The idea is to allow resumable uploads to be transparently implemented by HTTP clients. This means that application developers just keep using the same API of their HTTP library as they have done in the past with traditional, non-resumable uploads. Once the HTTP library gets updated (e.g. because mobile OS or browsers start implementing resumable uploads), the HTTP library can transparently decide to use resumable uploads without explicit configuration by the application developer. Of course, in order to use resumable uploads, the HTTP library needs to know whether the server supports resumable uploads. If no support is detected, the HTTP library should use the traditional, non-resumable upload technique. We call this process feature detection.
 
-Ideally, the technique used for feature detection meets following **criteria** (there might not one approach which fits all requirements, so we have to prioritize them):
+Ideally, the technique used for feature detection meets following **criteria** (there might not be one approach which fits all requirements, so we have to prioritize them):
 
 1. Avoid additional roundtrips by the client, if possible (i.e. an additional HTTP request by the client should be avoided).
 2. Be backwards compatible to HTTP/1.1 and existing network infrastructure: This means to avoid using new features in HTTP/2, or features which might require changes to existing network infrastructure (e.g. nginx or HTTP libraries)
-3. Conserve the user's privacy (i.e. the feature detection should not leak information other third-parties about which URLs have been connected to)
+3. Conserve the user's privacy (i.e. the feature detection should not leak information to other third-parties about which URLs have been connected to)
 
 Following **approaches** have already been considered in the past. All except the last approaches have not been deemed acceptable and are therefore not included in the specification. This follow list is a reference for the advantages and disadvantages of some approaches:
 
