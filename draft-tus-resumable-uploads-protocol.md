@@ -192,7 +192,7 @@ If the server does not consider the upload associated with the token in the `Upl
 
 The client MUST NOT perform multiple Upload Transfer Procedures ({{upload-transfer}}) for the same token in parallel to avoid race conditions and data loss or corruption. The server is RECOMMENDED to take measures to avoid parallel Upload Transfer Procedures: The server MAY terminate any ongoing Upload Transfer Procedure ({{upload-transfer}}) for the same token. Since the client is not allowed to perform multiple transfers in parallel, the server can assume that the previous attempt has already failed. Therefore, the server MAY abruptly terminate the previous HTTP connection or stream.
 
-If the offset in the `Upload-Offset` header field does not match the value 0, the offset provided by the immediate previous Offset Retrieving Procedure ({{offset-retrieving}}), or the end offset of the immediate previous incomplete transfer, the server MUST respond with `400 (Bad Request)` status code.
+If the offset in the `Upload-Offset` header field does not match the value 0, the offset provided by the immediate previous Offset Retrieving Procedure ({{offset-retrieving}}), or the end offset of the immediate previous incomplete transfer, the server MUST respond with `409 (Conflict)` status code.
 
 If the request completes successfully and the entire upload is complete, the server MUST acknowledge it by responding with a successful status code between 200 and 299 (inclusive). Server is RECOMMENDED to use `201 (Created)` response if not otherwise specified. The response MUST NOT include the `Upload-Incomplete` header with the value of true.
 
@@ -243,7 +243,7 @@ If an upload is interrupted, the client MAY attempt to fetch the offset of the i
 
 The request MUST use the `HEAD` method and include the `Upload-Token` header. The request MUST NOT include the `Upload-Offset` header or the `Upload-Incomplete` header. The server MUST reject the request with the `Upload-Offset` header or the `Upload-Incomplete` header by sending a `400 (Bad Request)` response.
 
-If the server considers the upload associated with this token active, it MUST send back a `204 (No Content)` response with a header `Upload-Offset` which indicates the resumption offset for the client.
+If the server considers the upload associated with this token active, it MUST send back a `204 (No Content)` response. The response MUST include the `Upload-Offset` header set to the current resumption offset for the client. The response MUST include the `Upload-Incomplete` header which is set to true if and only if the upload is incomplete. An upload is considered complete if and only if the server completely and succesfully received a corresponding Upload Transfer Procedure ({{upload-transfer}}) request with the `Upload-Incomplete` header being omitted or set to false.
 
 The client MUST NOT perform the Offset Retrieving Procedure ({{offset-retrieving}}) while the Upload Transfer Procedures ({{upload-transfer}}) is in progress.
 
@@ -297,7 +297,7 @@ upload-token: :SGVs…SGU=:
 
 ## Upload-Token
 
-The `Upload-Token` request header field is an Item Structured Header (see {{Section 3.3 of STRUCTURED-FIELDS}}). Its value MUST be a byte sequence. Its ABNF is
+The `Upload-Token` request header field is an Item Structured Header (see {{Section 3.3 of STRUCTURED-FIELDS}}) carrying the token used for identification of a specific upload. Its value MUST be a byte sequence. Its ABNF is
 
 ~~~ abnf
 Upload-Token = sf-binary
@@ -309,7 +309,7 @@ A conforming implementation MUST be able to handle a `Upload-Token` field value 
 
 ## Upload-Offset
 
-The `Upload-Offset` request and response header field is an Item Structured Header. Its value MUST be an integer. Its ABNF is
+The `Upload-Offset` request and response header field is an Item Structured Header indicating the resumption offset of corresponding upload, counted in bytes. Its value MUST be an integer. Its ABNF is
 
 ~~~ abnf
 Upload-Offset = sf-integer
@@ -317,13 +317,11 @@ Upload-Offset = sf-integer
 
 ## Upload-Incomplete
 
-The `Upload-Incomplete` request and response header field is an Item Structured Header. Its value MUST be a boolean. Its ABNF is
+The `Upload-Incomplete` request and response header field is an Item Structured Header indicating whether the corresponding upload is considered complete. Its value MUST be a boolean. Its ABNF is
 
 ~~~ abnf
 Upload-Incomplete = sf-boolean
 ~~~
-
-The value of the `Upload-Incomplete` header MUST be true.
 
 # Redirection
 
