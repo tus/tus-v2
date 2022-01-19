@@ -204,9 +204,11 @@ If the request completes successfully but the entire upload is not yet complete 
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
+upload-draft-version: 1
 [content]
 
 :status: 104
+upload-draft-version: 1
 
 :status: 201
 ~~~
@@ -219,6 +221,7 @@ upload-token: :SGVs…SGU=:
 upload-token: :SGVs…SGU=:
 upload-offset: 0
 upload-incomplete: ?1
+upload-draft-version: 1
 [partial content]
 
 :status: 201
@@ -236,6 +239,20 @@ If the server detects the Upload Transfer Procedure with neither the `Upload-Off
 The client MUST NOT attempt to resume an upload if it did not receive the `104 (Upload Resumption Supported)` informational response, and it does not have other signals of whether the server supporting resumable upload.
 
 If the client is aware of the server support, it SHOULD start an upload with the `Upload-Offset` header set to 0 in order to prevent the unnecessary informational response.
+
+## Draft Version Identification
+
+> **RFC Editor's Note:**  Please remove this section and `Upload-Draft-Version` from all examples prior to publication of a final version of this document.
+
+Client implementations of draft versions of the protocol MUST send a header field `Upload-Draft-Version` with the corresponding draft number as its value to its requests. For example, draft-tus-resumable-uploads-protocol-01 is identified using the header field `Upload-Draft-Version: 1`.
+
+Server implementations of draft versions of the protocol MUST NOT send a `104 (Upload Resumption Supported)` informational response when the draft version indicated by the `Upload-Draft-Version` header field in the request is missing or mismatching.
+
+Server implementations of draft versions of the protocol MUST also send a header field `Upload-Draft-Version` with the corresponding draft number as its value to the `104 (Upload Resumption Supported)` informational response.
+
+Client implementations of draft versions of the protocol MUST ignore a `104 (Upload Resumption Supported)` informational response with missing or mismatching draft version indicated by the `Upload-Draft-Version` header field.
+
+The reason both the client and the server are sending and checking the draft version is to ensure that implementations of the final RFC will not accidentally inter-op with draft implementations, as they will not check the existence of the `Upload-Draft-Version` header field.
 
 # Offset Retrieving Procedure {#offset-retrieving}
 
@@ -261,6 +278,7 @@ If the server does not consider the upload associated with this token active, it
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
+upload-draft-version: 1
 
 :status: 204
 upload-offset: 100
@@ -289,6 +307,7 @@ If the server does not support cancellation, it MUST respond with `405 (Method N
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
+upload-draft-version: 1
 
 :status: 204
 ~~~
