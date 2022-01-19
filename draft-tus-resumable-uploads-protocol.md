@@ -196,7 +196,7 @@ If the offset in the `Upload-Offset` header field does not match the value 0, th
 
 If the request completes successfully and the entire upload is complete, the server MUST acknowledge it by responding with a successful status code between 200 and 299 (inclusive). Server is RECOMMENDED to use `201 (Created)` response if not otherwise specified. The response MUST NOT include the `Upload-Incomplete` header with the value of true.
 
-If the request completes successfully but the entire upload is not yet complete indicated by the `Upload-Incomplete` header, the server MUST acknowledge it by responding with the `201 (Created)` status code and the `Upload-Incomplete` header set to true.
+If the request completes successfully but the entire upload is not yet complete indicated by the `Upload-Incomplete` header, the server MUST acknowledge it by responding with the `201 (Created)` status code, the `Upload-Incomplete` header set to true, and the `Upload-Offset` header set to the new upload resumption offset.
 
 ~~~ example
 :method: POST
@@ -219,13 +219,15 @@ upload-draft-version: 1
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
+upload-draft-version: 1
 upload-offset: 0
 upload-incomplete: ?1
-upload-draft-version: 1
-[partial content]
+content-length: 25
+[partial content (25 bytes)]
 
 :status: 201
 upload-incomplete: ?1
+upload-offset: 25
 ~~~
 
 The client MAY automatically attempt upload resumption when the connection is terminated unexpectedly, or if a server error status code between 500 and 599 (inclusive) is received. The client SHOULD NOT automatically retry if a client error status code between 400 and 499 (inclusive) is received.
