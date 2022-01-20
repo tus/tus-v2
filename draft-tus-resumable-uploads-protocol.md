@@ -204,11 +204,11 @@ If the request completes successfully but the entire upload is not yet complete 
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
-upload-draft-version: 1
+upload-draft-interop-version: 1
 [content]
 
 :status: 104
-upload-draft-version: 1
+upload-draft-interop-version: 1
 
 :status: 201
 ~~~
@@ -219,7 +219,7 @@ upload-draft-version: 1
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
-upload-draft-version: 1
+upload-draft-interop-version: 1
 upload-offset: 0
 upload-incomplete: ?1
 content-length: 25
@@ -244,17 +244,23 @@ If the client is aware of the server support, it SHOULD start an upload with the
 
 ## Draft Version Identification
 
-> **RFC Editor's Note:**  Please remove this section and `Upload-Draft-Version` from all examples prior to publication of a final version of this document.
+> **RFC Editor's Note:**  Please remove this section and `Upload-Draft-Interop-Version` from all examples prior to publication of a final version of this document.
 
-Client implementations of draft versions of the protocol MUST send a header field `Upload-Draft-Version` with the corresponding draft number as its value to its requests. For example, draft-tus-resumable-uploads-protocol-01 is identified using the header field `Upload-Draft-Version: 1`.
+The current interop version is 1.
 
-Server implementations of draft versions of the protocol MUST NOT send a `104 (Upload Resumption Supported)` informational response when the draft version indicated by the `Upload-Draft-Version` header field in the request is missing or mismatching.
+Client implementations of draft versions of the protocol MUST send a header field `Upload-Draft-Interop-Version` with the interop version as its value to its requests. Its ABNF is
 
-Server implementations of draft versions of the protocol MUST also send a header field `Upload-Draft-Version` with the corresponding draft number as its value to the `104 (Upload Resumption Supported)` informational response.
+~~~ abnf
+Upload-Draft-Interop-Version = sf-integer
+~~~
 
-Client implementations of draft versions of the protocol MUST ignore a `104 (Upload Resumption Supported)` informational response with missing or mismatching draft version indicated by the `Upload-Draft-Version` header field.
+Server implementations of draft versions of the protocol MUST NOT send a `104 (Upload Resumption Supported)` informational response when the interop version indicated by the `Upload-Draft-Interop-Version` header field in the request is missing or mismatching.
 
-The reason both the client and the server are sending and checking the draft version is to ensure that implementations of the final RFC will not accidentally inter-op with draft implementations, as they will not check the existence of the `Upload-Draft-Version` header field.
+Server implementations of draft versions of the protocol MUST also send a header field `Upload-Draft-Interop-Version` with the interop version as its value to the `104 (Upload Resumption Supported)` informational response.
+
+Client implementations of draft versions of the protocol MUST ignore a `104 (Upload Resumption Supported)` informational response with missing or mismatching interop version indicated by the `Upload-Draft-Interop-Version` header field.
+
+The reason both the client and the server are sending and checking the draft version is to ensure that implementations of the final RFC will not accidentally interop with draft implementations, as they will not check the existence of the `Upload-Draft-Interop-Version` header field.
 
 # Offset Retrieving Procedure {#offset-retrieving}
 
@@ -262,7 +268,7 @@ If an upload is interrupted, the client MAY attempt to fetch the offset of the i
 
 The request MUST use the `HEAD` method and include the `Upload-Token` header. The request MUST NOT include the `Upload-Offset` header or the `Upload-Incomplete` header. The server MUST reject the request with the `Upload-Offset` header or the `Upload-Incomplete` header by sending a `400 (Bad Request)` response.
 
-If the server considers the upload associated with this token active, it MUST send back a `204 (No Content)` response. The response MUST include the `Upload-Offset` header set to the current resumption offset for the client. The response MUST include the `Upload-Incomplete` header which is set to true if and only if the upload is incomplete. An upload is considered complete if and only if the server completely and succesfully received a corresponding Upload Transfer Procedure ({{upload-transfer}}) request with the `Upload-Incomplete` header being omitted or set to false.
+If the server considers the upload associated with this token active, it MUST send back a `204 (No Content)` response. The response MUST include the `Upload-Offset` header set to the current resumption offset for the client. The response MUST include the `Upload-Incomplete` header which is set to true if and only if the upload is incomplete. An upload is considered complete if and only if the server completely and successfully received a corresponding Upload Transfer Procedure ({{upload-transfer}}) request with the `Upload-Incomplete` header being omitted or set to false.
 
 The client MUST NOT perform the Offset Retrieving Procedure ({{offset-retrieving}}) while the Upload Transfer Procedures ({{upload-transfer}}) is in progress.
 
@@ -280,7 +286,7 @@ If the server does not consider the upload associated with this token active, it
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
-upload-draft-version: 1
+upload-draft-interop-version: 1
 
 :status: 204
 upload-offset: 100
@@ -309,7 +315,7 @@ If the server does not support cancellation, it MUST respond with `405 (Method N
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
-upload-draft-version: 1
+upload-draft-interop-version: 1
 
 :status: 204
 ~~~
@@ -412,7 +418,7 @@ Following **approaches** have already been considered in the past. All except th
 
 **Include a support statement in the SETTINGS frame.** The SETTINGS frame is a HTTP/2 feature and is sent by the server to the client to exchange information about the current connection. The idea was to include an additional statement in this frame, so the client can detect support for resumable uploads without an additional roundtrip. The problem is that this is not compatible with HTTP/1.1. Furthermore, the SETTINGS frame is intended for information about the current connection (not bound to a request/response) and might not be persisted when transmitted through a proxy.
 
-**Include a support statement in the DNS record.** The client can detect support when resolving a domain name. Of course, DNS is not semantically the correct layer. Also, DNS might not be involved if the record is chached or retrieved from a hosts files.
+**Include a support statement in the DNS record.** The client can detect support when resolving a domain name. Of course, DNS is not semantically the correct layer. Also, DNS might not be involved if the record is cached or retrieved from a hosts files.
 
 **Send a HTTP request to ask for support.** This is the easiest approach where the client sends an OPTIONS request and uses the response to determine if the server indicates support for resumable uploads. An alternative is that the client sends the request to a well-known URL to obtain this response, e.g. `/.well-known/resumable-uploads`. Of course, while being fully backwards-compatible, it requires an additional roundtrip.
 
