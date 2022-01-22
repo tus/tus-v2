@@ -188,15 +188,19 @@ If the end of the request body is not the end of the upload, the `Upload-Incompl
 
 The client MAY send the metadata of the file using headers such as `Content-Type` (see {{Section 8.3 of HTTP}} and `Content-Disposition` {{!RFC6266}} when starting a new upload. It is OPTIONAL for the client to repeat the metadata when resuming an upload.
 
-If the server does not consider the upload associated with the token in the `Upload-Token` header field active, but the resumption offset is non-zero, it MUST respond with 404 (Not Found) status code.
+If the server does not consider the upload associated with the token in the `Upload-Token` header field active, but the resumption offset is non-zero, it MUST respond with `404 (Not Found)` status code and MUST NOT include the `Upload-Offset` header in the response.
 
 The client MUST NOT perform multiple Upload Transfer Procedures ({{upload-transfer}}) for the same token in parallel to avoid race conditions and data loss or corruption. The server is RECOMMENDED to take measures to avoid parallel Upload Transfer Procedures: The server MAY terminate any ongoing Upload Transfer Procedure ({{upload-transfer}}) for the same token. Since the client is not allowed to perform multiple transfers in parallel, the server can assume that the previous attempt has already failed. Therefore, the server MAY abruptly terminate the previous HTTP connection or stream.
 
-If the offset in the `Upload-Offset` header field does not match the value 0, the offset provided by the immediate previous Offset Retrieving Procedure ({{offset-retrieving}}), or the end offset of the immediate previous incomplete transfer, the server MUST respond with `409 (Conflict)` status code.
+If the offset in the `Upload-Offset` header field does not match the value 0, the offset provided by the immediate previous Offset Retrieving Procedure ({{offset-retrieving}}), or the end offset of the immediate previous incomplete transfer, the server MUST respond with `409 (Conflict)` status code and the `Upload-Offset` header set to the expected upload resumption offset.
 
-If the request completes successfully and the entire upload is complete, the server MUST acknowledge it by responding with a successful status code between 200 and 299 (inclusive). Server is RECOMMENDED to use `201 (Created)` response if not otherwise specified. The response MUST NOT include the `Upload-Incomplete` header with the value of true.
+If the request completes successfully and the entire upload is complete, the server MUST acknowledge it by responding with a successful status code between 200 and 299 (inclusive) and the `Upload-Offset` header set to the full upload's length. The Server is RECOMMENDED to use `201 (Created)` response if not otherwise specified. The response MUST NOT include the `Upload-Incomplete` header with the value of true.
 
 If the request completes successfully but the entire upload is not yet complete indicated by the `Upload-Incomplete` header, the server MUST acknowledge it by responding with the `201 (Created)` status code, the `Upload-Incomplete` header set to true, and the `Upload-Offset` header set to the new upload resumption offset.
+
+The Client MAY use the `Upload-Offset` header in the response to verify that the Server received the expected number of bytes. If the response does not contain the `Upload-Offset` header, and the status code is not `404 (Not Found)`, the Client MUST perform the Offset Retrieving Procedure ({{offset-retrieving}}) to retrieve the expected offset before continuing the upload.
+
+The Server MAY include the `Upload-Offset` header for other status codes than described in this document if and only if it can guarantee that the offset is correct.
 
 ~~~ example
 :method: POST
@@ -205,12 +209,13 @@ If the request completes successfully but the entire upload is not yet complete 
 :path: /upload
 upload-token: :SGVs…SGU=:
 upload-draft-version: 1
-[content]
+[content (25 bytes)]
 
 :status: 104
 upload-draft-version: 1
 
 :status: 201
+upload-offset: 25
 ~~~
 
 ~~~ example
