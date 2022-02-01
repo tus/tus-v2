@@ -158,11 +158,11 @@ Client                                      Server
 ~~~
 {: #fig-upload-cancellation-procedure title="Upload Cancellation Procedure"}
 
-## Example 2: File of unknown size
+## Example 2: Upload as a series of parts
 
-In some cases a client does no know the final size of a resource before it initiates an upload. For instance, a file that is contains data from a stream source.
+In some cases clients might prefer to upload a file as a series of parts sent across multiple HTTP messages. One use case is to overcome server limits on HTTP message content size. Another use case is where the client does not know the final size, such as when file data originates from a streaming source.
 
-This example shows how a client can upload incomplete chunks of a file to the server across a sequence of procedures.
+This example shows how the client, with prior knowledge about the server's resumable upload support, can upload parts of a file over a sequence of procedures.
 
 1) If the client is aware that the server supports resumable upload, it can use the Upload Transfer Procedure with the `Upload-Incomplete` header to start an upload.
 
@@ -180,7 +180,7 @@ Client                                      Server
 ~~~
 {: #fig-upload-cancellation-procedure-usage title="Upload Transfer Procedure Usage"}
 
-2) The last chunk of the upload does not have the `Upload-Incomplete` header.
+2) The last part of the upload does not have the `Upload-Incomplete` header.
 
 ~~~
 Client                                      Server
