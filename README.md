@@ -2,9 +2,9 @@
 
 This is the working area for the IETF [RESUMABLE Working Group](https://datatracker.ietf.org/wg/resumable/documents/) Internet-Draft, "tus - Resumable Uploads Protocol".
 
-* [Editor's Copy](https://tus.github.io/tus-v2/#go.draft-ietf-resumable-uploads-protocol.html)
-* [Working Group Draft](https://tools.ietf.org/html/draft-ietf-resumable-uploads-protocol)
-* [Compare Editor's Copy to Working Group Draft](https://tus.github.io/tus-v2/#go.draft-ietf-resumable-uploads-protocol.diff)
+* [Editor's Copy](https://tus.github.io/tus-v2/#go.draft-tus-httpbis-resumable-uploads-protocol.html)
+* [Working Group Draft](https://tools.ietf.org/html/draft-tus-httpbis-resumable-uploads-protocol)
+* [Compare Editor's Copy to Working Group Draft](https://tus.github.io/tus-v2/#go.draft-tus-httpbis-resumable-uploads-protocol.diff)
 
 ## Building the Draft
 

@@ -1,7 +1,7 @@
 ---
 title: tus - Resumable Uploads Protocol
 abbrev: Resumable Uploads
-docname: draft-tus-resumable-uploads-protocol-latest
+docname: draft-tus-httpbis-resumable-uploads-protocol-latest
 category: std
 
 ipr: trust200902
