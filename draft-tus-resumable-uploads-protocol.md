@@ -87,7 +87,7 @@ The Resumable Uploads Protocol consists of several procedures that rely on HTTP 
 A single upload is a sequence of one or more procedures. Each upload is uniquely
 identified by a token chosen by a client. The token is carried in the Upload-Token header field; see {{upload-token}}.
 
-The remainder of this section uses an examples of a file upload to illustrate permutations of procedure sequence. Note, however, that HTTP message exchanges use representation data (see {{Section 8.1 of HTTP}}), which means that procedures can apply to many forms of content.
+The remainder of this section uses examples of a file upload to illustrate permutations of procedure sequence. Note, however, that HTTP message exchanges use representation data (see {{Section 8.1 of HTTP}}), which means that procedures can apply to many forms of content.
 
 ## Example 1: Complete upload of file with known size
 
