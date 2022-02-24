@@ -6,6 +6,14 @@ This is the working area for the IETF [RESUMABLE Working Group](https://datatrac
 * [Working Group Draft](https://tools.ietf.org/html/draft-tus-httpbis-resumable-uploads-protocol)
 * [Compare Editor's Copy to Working Group Draft](https://tus.github.io/tus-v2/#go.draft-tus-httpbis-resumable-uploads-protocol.diff)
 
+## Existing Implementations
+
+This draft is still a work-in-progress. However, some experimental implementation already exist:
+
+- [tusd server](https://github.com/tus/tusd/pull/568) 
+- [tusdotnet server](https://github.com/tusdotnet/tusdotnet/tree/POC/tus2)
+- Example server in [`examples/`](/examples)
+
 ## Building the Draft
 
 Formatted text and HTML versions of the draft can be built using `make`.
