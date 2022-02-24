@@ -208,9 +208,7 @@ When resuming an upload, the `Upload-Offset` header field ({{upload-offset}}) MU
 
 If the end of the request body is not the end of the upload, the `Upload-Incomplete` header field ({{upload-incomplete}}) MUST be set to true.
 
-The client MAY send the metadata of the file using headers such as `Content-Type` (see {{Section 8.3 of HTTP}} and `Content-Disposition` {{!RFC6266}} when starting a new upload. It is OPTIONAL for the client to repeat the metadata when resuming an upload.
-
-If the server does not consider the upload associated with the token in the `Upload-Token` header field active, but the resumption offset is non-zero, it MUST respond with 404 (Not Found) status code.
+If the server does not consider the upload associated with the token in the `Upload-Token` header field active, but the resumption offset is non-zero, it MUST respond with `404 (Not Found)` status code.
 
 The client MUST NOT perform multiple Upload Transfer Procedures ({{upload-transfer}}) for the same token in parallel to avoid race conditions and data loss or corruption. The server is RECOMMENDED to take measures to avoid parallel Upload Transfer Procedures: The server MAY terminate any ongoing Upload Transfer Procedure ({{upload-transfer}}) for the same token. Since the client is not allowed to perform multiple transfers in parallel, the server can assume that the previous attempt has already failed. Therefore, the server MAY abruptly terminate the previous HTTP connection or stream.
 
@@ -257,6 +255,8 @@ upload-offset: 25
 ~~~
 
 The client MAY automatically attempt upload resumption when the connection is terminated unexpectedly, or if a server error status code between 500 and 599 (inclusive) is received. The client SHOULD NOT automatically retry if a client error status code between 400 and 499 (inclusive) is received.
+
+File metadata can affect how servers might act on the uploaded file. Clients can send Representation Metadata (see {{Section 8.3 of HTTP}}) in the Upload Transfer Procedure request that starts an upload. Servers MAY interpret this metadata or MAY ignore it. Clients MUST NOT send representation metadata in subsequent Upload Transfer Procedure requests and servers MUST ignore representation received in subsequent requests. The `Content-Type` header can be used to indicate the MIME type of the file. The `Content-Disposition` header can be used to transmit a filename. If included, the parameters SHOULD be either `filename`, `filename*` or `boundary`.
 
 ## Feature Detection
 
@@ -455,6 +455,13 @@ Following **approaches** have already been considered in the past. All except th
 **Send a 104 intermediate response to indicate support.** The clients normally starts a traditional upload and includes a header indicate that it supports resumable uploads (e.g. `Upload-Offset: 0`). If the server also supports resumable uploads, it will immediately respond with a 104 intermediate response to indicate its support, before further processing the request. This way the client is informed during the upload whether it can resume from possible connection errors or not. While an additional roundtrip is avoided, the problem with that solution is that many HTTP server libraries do not support sending custom 1XX responses and that some proxies may not be able to handle new 1XX status codes correctly.
 
 **Send a 103 Early Hint response to indicate support.** This approach is the similar to the above one, with one exception: Instead of a new `104 (Upload Resumption Supported)` status code, the existing `103 (Early Hint)` status code is used in the intermediate response. The 103 code would then be accompanied by a header indicating support for resumable uploads (e.g. `Resumable-Uploads: 1`). It is unclear whether the Early Hints code is appropriate for that, as it is currently only used to indicate resources for prefetching them.
+
+## Upload Metadata
+{:numbered="false"}
+
+The Upload Transfer Procedure ({{upload-transfer}}) allows the `Content-Type` and `Content-Disposition` header to be included. They are intended to be a standardized way of communicating the file name and file type, if available. However, this is not without controversy. Some argue that since these headers are already defined in other specifications, it is not necessary to include them here again. Furthermore, the `Content-Disposition` header field's format is not clearly enough defined. For example, it is left open which disposition value should be used in the header. There needs to be more discussion whether this approach is suited or not.
+
+However, from experience with the tus project, users are often asking for a way to communicate the file name and file type. Therefore, we believe it is help to explicitly include an approach for doing so. 
 
 ## FAQ
 {:numbered="false"}
