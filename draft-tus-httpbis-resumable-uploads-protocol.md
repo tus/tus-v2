@@ -216,9 +216,11 @@ The client MUST NOT perform multiple Upload Transfer Procedures ({{upload-transf
 
 If the offset in the `Upload-Offset` header field does not match the value 0, the offset provided by the immediate previous Offset Retrieving Procedure ({{offset-retrieving}}), or the end offset of the immediate previous incomplete transfer, the server MUST respond with `409 (Conflict)` status code.
 
+The server MUST send the `Upload-Offset` header in the response if it considers the upload active, either when the response is a success (e.g. `201 (Created)`), or when the response is a failure (e.g. `409 (Conflict)`). The value MUST be equal to the end offset of the entire upload, or the begin offset of the next chunk if the upload is still incomplete. The client SHOULD consider the upload failed if the response status code indicates a success but the offset in the `Upload-Offset` header field in the response does not equal to the begin offset plus the number of bytes uploaded in the request.
+
 If the request completes successfully and the entire upload is complete, the server MUST acknowledge it by responding with a successful status code between 200 and 299 (inclusive). Server is RECOMMENDED to use `201 (Created)` response if not otherwise specified. The response MUST NOT include the `Upload-Incomplete` header with the value of true.
 
-If the request completes successfully but the entire upload is not yet complete indicated by the `Upload-Incomplete` header, the server MUST acknowledge it by responding with the `201 (Created)` status code, the `Upload-Incomplete` header set to true, and the `Upload-Offset` header set to the new upload resumption offset.
+If the request completes successfully but the entire upload is not yet complete indicated by the `Upload-Incomplete` header, the server MUST acknowledge it by responding with the `201 (Created)` status code, the `Upload-Incomplete` header set to true.
 
 ~~~ example
 :method: POST
@@ -227,12 +229,14 @@ If the request completes successfully but the entire upload is not yet complete 
 :path: /upload
 upload-token: :SGVs…SGU=:
 upload-draft-interop-version: 1
-[content]
+content-length: 100
+[content (100 bytes)]
 
 :status: 104
 upload-draft-interop-version: 1
 
 :status: 201
+upload-offset: 100
 ~~~
 
 ~~~ example
