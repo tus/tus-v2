@@ -256,7 +256,7 @@ upload-offset: 25
 
 The client MAY automatically attempt upload resumption when the connection is terminated unexpectedly, or if a server error status code between 500 and 599 (inclusive) is received. The client SHOULD NOT automatically retry if a client error status code between 400 and 499 (inclusive) is received.
 
-File metadata can affect how servers might act on the uploaded file. Clients can send Representation Metadata (see {{Section 8.3 of HTTP}}) in the Upload Transfer Procedure request that starts an upload. Servers MAY interpret this metadata or MAY ignore it. Clients MUST NOT send representation metadata in subsequent Upload Transfer Procedure requests and servers MUST ignore representation received in subsequent requests. The `Content-Type` header can be used to indicate the MIME type of the file. The `Content-Disposition` header can be used to transmit a filename. If included, the parameters SHOULD be either `filename`, `filename*` or `boundary`.
+File metadata can affect how servers might act on the uploaded file. Clients can send Representation Metadata (see {{Section 8.3 of HTTP}}) in the Upload Transfer Procedure request that starts an upload. Servers MAY interpret this metadata or MAY ignore it. Clients SHOULD NOT send representation metadata in subsequent Upload Transfer Procedure requests and servers SHOULD ignore representation received in subsequent requests. The `Content-Type` header can be used to indicate the MIME type of the file. The `Content-Disposition` header can be used to transmit a filename. If included, the parameters SHOULD be either `filename`, `filename*` or `boundary`.
 
 ## Feature Detection
 
