@@ -1,0 +1,27 @@
+Hello HTTP working group,
+
+in the past months we have been working on a draft for resumable file uploads using HTTP and want to present our work to you. To briefly recap, resumable uploads allow resuming an upload where it has been stopped. For example, after the connection has been interrupted. A 100 MB upload, which was interrupted after transmitting 70 MB, only needs to transmit the remaining 30 MB.
+
+There is support in HTTP for resumable downloads using the Range header, but no support for resumable uploads so far. There have been attempts to standardize resumable uploads, such as [1], but none completed this journey yet to our knowledge.
+
+We wanted to address this shortage and came up with a draft [2] (the GitHub repository is at [3]). We are interested any feedback on this and see if it is possible to get resumable uploads adopted.
+
+In case you are interested in the background of this draft: The origin is within the tus project [4], which has been developing a HTTP-based protocol for resumable uploads [5] since 2013 (tus was also posted on this mailing list at the time [6]). Furthermore, we also provide various open-source implementations [7] to allow easy usage on the web, in mobile applications, desktop application, or server environments. tus has seen great adaption, proving that there is a demand for an open-source solution providing resumable uploads.
+
+We hope to bring resumable uploads to more people. For this, adopting resumable uploads into HTTP would be a great step. There is also interest in including support for resumable uploads natively into platforms, like browsers and mobile SDKs, so that developers do not have to bring their own library for resumable uploads.
+
+So we have taken the main uploading process from our tus protocol and reworked it into a self-containing draft, which we want to present to you!
+
+Thank you for any feedback in advance!
+
+Best regards,
+Marius Kleidl
+
+[1] https://lists.w3.org/Archives/Public/ietf-http-wg/2019JulSep/0066.html
+[2] https://datatracker.ietf.org/doc/draft-tus-httpbis-resumable-uploads-protocol/
+[3] https://github.com/tus/tus-v2
+[4] https://tus.io/
+[5] https://tus.io/protocols/resumable-upload.html
+[6] https://mailarchive.ietf.org/arch/msg/httpbisa/I__B5Kc7h-1TvRRB9rmjY8tR-T0/
+[7] https://tus.io/implementations.html
+
