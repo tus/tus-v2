@@ -1,16 +1,16 @@
 Hello HTTP working group,
 
-in the past months we have been working on a draft for resumable file uploads using HTTP and want to present our work to you. To briefly recap, resumable uploads allow resuming an upload where it has been stopped. For example, after the connection has been interrupted. A 100 MB upload, which was interrupted after transmitting 70 MB, only needs to transmit the remaining 30 MB.
+we are all familiar with connectivity disruptions affecting our internet activities. One example is when a large file download is interrupted; say a 100 MB file download encounters a network loss after the client receives 70 MB. Fortunately, resumable HTTP downloads using range requests are a widely deployed standard feature that allows clients to fetch the remaining 30 MB only, saving time and resources for both endpoints. However, in the opposite direction, there is not a standard convention for resuming HTTP uploads.
 
-There is support in HTTP for resumable downloads using the Range header, but no support for resumable uploads so far. There have been attempts to standardize resumable uploads, such as [1], but none completed this journey yet to our knowledge.
+Across the HTTP ecosystem there are several different approaches to providing resumable uploads. We are aware of at least one attempt to try and standardize an approach [1], but to our knowledge none have succeeded in being adopted and driven to conclusion.
 
-We wanted to address this shortage and came up with a draft [2] (the GitHub repository is at [3]). We are interested any feedback on this and see if it is possible to get resumable uploads adopted.
+We believe resumable uploads are a common problem and that there is value in a standard resumable upload approach. We've been working on a document [2] [3] that uses HTTP to solve what we believe to be the core problem set, while also allowing for extended use cases. We are bringing this to the list to understand if there is interest in the working group to solve the problem, and whether our document is a good basis for a solution.
 
 In case you are interested in the background of this draft: The origin is within the tus project [4], which has been developing a HTTP-based protocol for resumable uploads [5] since 2013 (tus was also posted on this mailing list at the time [6]). Furthermore, we also provide various open-source implementations [7] to allow easy usage on the web, in mobile applications, desktop application, or server environments. tus has seen great adaption, proving that there is a demand for an open-source solution providing resumable uploads.
 
 We hope to bring resumable uploads to more people. For this, adopting resumable uploads into HTTP would be a great step. There is also interest in including support for resumable uploads natively into platforms, like browsers and mobile SDKs, so that developers do not have to bring their own library for resumable uploads.
 
-So we have taken the main uploading process from our tus protocol and reworked it into a self-containing draft, which we want to present to you!
+We have taken the main uploading process from our tus protocol and reworked it into a self-containing draft, which we want to present to you! As such, this draft can be seen as an evolution of our work on tus and as a step to increase availability of resumable uploads.
 
 Thank you for any feedback in advance!
 
