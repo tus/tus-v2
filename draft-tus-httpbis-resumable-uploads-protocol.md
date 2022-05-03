@@ -316,11 +316,11 @@ The client MAY automatically start uploading from the beginning using Upload Cre
 
 The Upload Appending Procedure is used for resuming an existing upload.
 
-The request MUST use the `HEAD` method and include the `Upload-Token` header. The `Upload-Offset` header field ({{upload-offset}}) MUST be set to the resumption offset.
+The request MUST use the `PATCH` method and include the `Upload-Token` header. The `Upload-Offset` header field ({{upload-offset}}) MUST be set to the resumption offset.
 
 If the end of the request body is not the end of the upload, the `Upload-Incomplete` header field ({{upload-incomplete}}) MUST be set to true.
 
-The client SHOULD NOT send representation metadata in the request and servers SHOULD ignore any representation metadata received.
+The server SHOULD respect representation metadata received in the Upload Creation Procedure ({{upload-creation}}) and ignore any representation metadata received in the Upload Appending Procedure ({{upload-appending}}).
 
 If the server does not consider the upload associated with the token in the `Upload-Token` header field active, it MUST respond with `404 (Not Found)` status code.
 
