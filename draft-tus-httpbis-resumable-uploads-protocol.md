@@ -497,7 +497,7 @@ Following **approaches** have already been considered in the past. All except th
 
 The Upload Creation Procedure ({{upload-creation}}) allows the `Content-Type` and `Content-Disposition` header to be included. They are intended to be a standardized way of communicating the file name and file type, if available. However, this is not without controversy. Some argue that since these headers are already defined in other specifications, it is not necessary to include them here again. Furthermore, the `Content-Disposition` header field's format is not clearly enough defined. For example, it is left open which disposition value should be used in the header. There needs to be more discussion whether this approach is suited or not.
 
-However, from experience with the tus project, users are often asking for a way to communicate the file name and file type. Therefore, we believe it is help to explicitly include an approach for doing so. 
+However, from experience with the tus project, users are often asking for a way to communicate the file name and file type. Therefore, we believe it is help to explicitly include an approach for doing so.
 
 ## FAQ
 {:numbered="false"}
