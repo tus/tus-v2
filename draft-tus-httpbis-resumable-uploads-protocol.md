@@ -442,6 +442,12 @@ Specification: This document
 
 --- back
 
+# Changes
+
+## draft-tus-httpbis-resumable-uploads-protocol-00
+
+* Split the Upload Transfer Procedure into the Upload Creation Procedure and the Upload Appending Procedure.
+
 # Acknowledgments
 {:numbered="false"}
 
