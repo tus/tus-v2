@@ -144,7 +144,7 @@ Client                                      Server
 ~~~
 {: #fig-resuming-upload title="Resuming Upload"}
 
-4) If the client is not interesting in completing the upload anymore, it can instruct the server to delete the upload and free all related resources using the Upload Cancellation Procedure ({{upload-cancellation}}).
+4) If the client is not interested in completing the upload anymore, it can instruct the server to delete the upload and free all related resources using the Upload Cancellation Procedure ({{upload-cancellation}}).
 
 ~~~
 Client                                      Server
