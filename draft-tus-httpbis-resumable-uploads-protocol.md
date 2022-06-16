@@ -80,8 +80,9 @@ Procedure: An HTTP message exchange for that can be used for resumable uploads.
 
 The Resumable Uploads Protocol consists of several procedures that rely on HTTP message exchanges. The following procedures are defined:
 
-* Upload Transfer Procedure ({{upload-transfer}})
+* Upload Creation Procedure ({{upload-creation}})
 * Offset Retrieving Procedure ({{offset-retrieving}})
+* Upload Appending Procedure ({{upload-appending}})
 * Upload Cancellation Procedure ({{upload-cancellation}})
 
 A single upload is a sequence of one or more procedures. Each upload is uniquely
@@ -93,7 +94,7 @@ The remainder of this section uses examples of a file upload to illustrate permu
 
 In this example, the client first attempts to upload a file with a known size in a single HTTP request. An interruption occurs and the client then attempts to resume the upload using subsequent HTTP requests.
 
-1) The Upload Transfer Procedure ({{upload-transfer}}) can be used to notify the server that the client wants to begin an upload. The server should then reserve the required resources to accept the upload from the client. The client also begins transferring the entire file in the request body. The request includes the Upload-Token header, which is used for identifying future requests related to this upload. An informational response can be sent to the client to signal the support of resumable upload on the server.
+1) The Upload Creation Procedure ({{upload-creation}}) can be used to notify the server that the client wants to begin an upload. The server should then reserve the required resources to accept the upload from the client. The client also begins transferring the entire file in the request body. The request includes the Upload-Token header, which is used for identifying future requests related to this upload. An informational response can be sent to the client to signal the support of resumable upload on the server.
 
 ~~~
 Client                                  Server
@@ -114,9 +115,9 @@ Client                                  Server
 |------------------------------------------->|
 |                                            |
 ~~~
-{: #fig-upload-transfer-procedure-init title="Upload Transfer Procedure Initiation"}
+{: #fig-upload-creation-procedure title="Upload Creation Procedure"}
 
-2) If the connection to the server gets interrupted during the Upload Transfer Procedure, the client may want to resume the upload. Before this is possible, the client must know the amount of data that the server was able to receive before the connection got interrupted. To achieve this, the client uses the Offset Retrieving Procedure ({{offset-retrieving}}) to obtain the upload's offset.
+2) If the connection to the server gets interrupted during the Upload Creation Procedure, the client may want to resume the upload. Before this is possible, the client must know the amount of data that the server was able to receive before the connection got interrupted. To achieve this, the client uses the Offset Retrieving Procedure ({{offset-retrieving}}) to obtain the upload's offset.
 
 ~~~
 Client                                      Server
@@ -130,19 +131,19 @@ Client                                      Server
 ~~~
 {: #fig-offset-retrieving-procedure title="Offset Retrieving Procedure"}
 
-3) After the Offset Retrieving Procedure ({{offset-retrieving}}) completes, the client can resume the upload by sending the remaining file content to the server, appending to the already stored data in the upload. The `Upload-Offset` value is included to ensure that the client and server agree on the offset that the upload resumes from.
+3) After the Offset Retrieving Procedure ({{offset-retrieving}}) completes, the client can resume the upload by sending the remaining file content to the server using the Upload Appending Procedure ({{upload-appending}}), appending to the already stored data in the upload. The `Upload-Offset` value is included to ensure that the client and server agree on the offset that the upload resumes from.
 
 ~~~
 Client                                      Server
 |                                                |
-| POST with Upload-Token and Upload-Offset       |
+| PATCH with Upload-Token and Upload-Offset      |
 |----------------------------------------------->|
 |                                                |
 |                      201 Created on completion |
 |<-----------------------------------------------|
 |                                                |
 ~~~
-{: #fig-resuming-upload title="Resuming Upload"}
+{: #fig-upload-appending-procedure title="Upload Appending Procedure"}
 
 4) If the client is not interested in completing the upload anymore, it can instruct the server to delete the upload and free all related resources using the Upload Cancellation Procedure ({{upload-cancellation}}).
 
@@ -164,7 +165,7 @@ In some cases clients might prefer to upload a file as a series of parts sent ac
 
 This example shows how the client, with prior knowledge about the server's resumable upload support, can upload parts of a file over a sequence of procedures.
 
-1) If the client is aware that the server supports resumable upload, it can use the Upload Transfer Procedure with the `Upload-Incomplete` header to start an upload.
+1) If the client is aware that the server supports resumable upload, it can use the Upload Creation Procedure with the `Upload-Incomplete` header to start an upload.
 
 ~~~
 Client                                      Server
@@ -178,41 +179,33 @@ Client                                      Server
 |<-----------------------------------------------|
 |                                                |
 ~~~
-{: #fig-upload-cancellation-procedure-usage title="Upload Transfer Procedure Usage"}
+{: #fig-upload-creation-procedure-incomplete title="Upload Creation Procedure Incomplete"}
 
-2) The last part of the upload does not have the `Upload-Incomplete` header.
+2) After creation, the following parts are sent using the Upload Appending Procedure ({{upload-appending}}), and the last part of the upload does not have the `Upload-Incomplete` header.
 
 ~~~
 Client                                      Server
 |                                                |
-| POST with Upload-Token and Upload-Offset       |
+| PATCH with Upload-Token and Upload-Offset      |
 |----------------------------------------------->|
 |                                                |
 |                      201 Created on completion |
 |<-----------------------------------------------|
 |                                                |
 ~~~
-{: #fig-upload-cancellation-procedure-last-chunk title="Upload Transfer Procedure Last Chunk"}
+{: #fig-upload-appending-procedure-last-chunk title="Upload Appending Procedure Last Chunk"}
 
-# Upload Transfer Procedure {#upload-transfer}
+# Upload Creation Procedure {#upload-creation}
 
-The Upload Transfer Procedure is intended for transferring the data chunk. As such, it can be used for either resuming an existing upload, or starting a new upload. A limited form of this procedure MAY be used by the client to start a new upload without the knowledge of server support.
+The Upload Creation Procedure is intended for starting a new upload. A limited form of this procedure MAY be used by the client without the knowledge of server support of the Resumable Uploads Protocol.
 
 This procedure is designed to be compatible with a regular upload. Therefore all methods are allowed with the exception of `GET`, `HEAD`, `DELETE`, and `OPTIONS`. All response status codes are allowed. The client is RECOMMENDED to use the `POST` method if not otherwise intended. The server MAY only support a limited number of methods.
 
-The client MUST use the same method throughout an entire upload. The server SHOULD reject the attempt to resume an upload with a different method with `400 (Bad Request)` response.
-
-The request MUST include the `Upload-Token` header field ({{upload-token}}) which uniquely identifies an upload. The client MUST NOT reuse the token for a different upload.
-
-When resuming an upload, the `Upload-Offset` header field ({{upload-offset}}) MUST be set to the resumption offset. The resumption offset 0 indicates a new upload. The absence of the `Upload-Offset` header field implies the resumption offset of 0.
+The request MUST include the `Upload-Token` header field ({{upload-token}}) which uniquely identifies an upload. The client MUST NOT reuse the token for a different upload. The request MUST NOT include the `Upload-Offset` header.
 
 If the end of the request body is not the end of the upload, the `Upload-Incomplete` header field ({{upload-incomplete}}) MUST be set to true.
 
-If the server does not consider the upload associated with the token in the `Upload-Token` header field active, but the resumption offset is non-zero, it MUST respond with `404 (Not Found)` status code.
-
-The client MUST NOT perform multiple Upload Transfer Procedures ({{upload-transfer}}) for the same token in parallel to avoid race conditions and data loss or corruption. The server is RECOMMENDED to take measures to avoid parallel Upload Transfer Procedures: The server MAY terminate any ongoing Upload Transfer Procedure ({{upload-transfer}}) for the same token. Since the client is not allowed to perform multiple transfers in parallel, the server can assume that the previous attempt has already failed. Therefore, the server MAY abruptly terminate the previous HTTP connection or stream.
-
-If the offset in the `Upload-Offset` header field does not match the value 0, the offset provided by the immediate previous Offset Retrieving Procedure ({{offset-retrieving}}), or the end offset of the immediate previous incomplete transfer, the server MUST respond with `409 (Conflict)` status code.
+If the server already has an active upload with the same token in the `Upload-Token` header field, it MUST respond with `409 (Conflict)` status code.
 
 The server MUST send the `Upload-Offset` header in the response if it considers the upload active, either when the response is a success (e.g. `201 (Created)`), or when the response is a failure (e.g. `409 (Conflict)`). The value MUST be equal to the end offset of the entire upload, or the begin offset of the next chunk if the upload is still incomplete. The client SHOULD consider the upload failed if the response status code indicates a success but the offset in the `Upload-Offset` header field in the response does not equal to the begin offset plus the number of bytes uploaded in the request.
 
@@ -226,12 +219,12 @@ If the request completes successfully but the entire upload is not yet complete 
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
-upload-draft-interop-version: 1
+upload-draft-interop-version: 2
 content-length: 100
 [content (100 bytes)]
 
 :status: 104
-upload-draft-interop-version: 1
+upload-draft-interop-version: 2
 
 :status: 201
 upload-offset: 100
@@ -243,7 +236,7 @@ upload-offset: 100
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
-upload-draft-interop-version: 1
+upload-draft-interop-version: 2
 upload-offset: 0
 upload-incomplete: ?1
 content-length: 25
@@ -256,23 +249,21 @@ upload-offset: 25
 
 The client MAY automatically attempt upload resumption when the connection is terminated unexpectedly, or if a server error status code between 500 and 599 (inclusive) is received. The client SHOULD NOT automatically retry if a client error status code between 400 and 499 (inclusive) is received.
 
-File metadata can affect how servers might act on the uploaded file. Clients can send Representation Metadata (see {{Section 8.3 of HTTP}}) in the Upload Transfer Procedure request that starts an upload. Servers MAY interpret this metadata or MAY ignore it. Clients SHOULD NOT send representation metadata in subsequent Upload Transfer Procedure requests and servers SHOULD ignore representation received in subsequent requests. The `Content-Type` header can be used to indicate the MIME type of the file. The `Content-Disposition` header can be used to transmit a filename. If included, the parameters SHOULD be either `filename`, `filename*` or `boundary`.
+File metadata can affect how servers might act on the uploaded file. Clients can send Representation Metadata (see {{Section 8.3 of HTTP}}) in the Upload Creation Procedure request that starts an upload. Servers MAY interpret this metadata or MAY ignore it. The `Content-Type` header can be used to indicate the MIME type of the file. The `Content-Disposition` header can be used to transmit a filename. If included, the parameters SHOULD be either `filename`, `filename*` or `boundary`.
 
 ## Feature Detection
 
-If the client has no knowledge of whether the server supports resumable upload, the Upload Transfer Procedure MAY be used with some additional constraints. In particular, the `Upload-Offset` header field ({{upload-offset}}) and the `Upload-Incomplete` header field ({{upload-incomplete}}) MUST NOT be sent in the request if the server support is unclear. This allows the upload to function as if it is a regular upload.
+If the client has no knowledge of whether the server supports resumable upload, the Upload Creation Procedure MAY be used with some additional constraints. In particular, the `Upload-Incomplete` header field ({{upload-incomplete}}) MUST NOT be sent in the request if the server support is unclear. This allows the upload to function as if it is a regular upload.
 
-If the server detects the Upload Transfer Procedure with neither the `Upload-Offset` header nor the `Upload-Incomplete` header, and it supports resumable upload, an informational response with `104 (Upload Resumption Supported)` status MAY be sent to the client while the request body is being uploaded.
+If the server detects the Upload Creation Procedure and it supports resumable upload, an informational response with `104 (Upload Resumption Supported)` status MAY be sent to the client while the request body is being uploaded.
 
 The client MUST NOT attempt to resume an upload if it did not receive the `104 (Upload Resumption Supported)` informational response, and it does not have other signals of whether the server supporting resumable upload.
-
-If the client is aware of the server support, it SHOULD start an upload with the `Upload-Offset` header set to 0 in order to prevent the unnecessary informational response.
 
 ## Draft Version Identification
 
 > **RFC Editor's Note:**  Please remove this section and `Upload-Draft-Interop-Version` from all examples prior to publication of a final version of this document.
 
-The current interop version is 1.
+The current interop version is 2.
 
 Client implementations of draft versions of the protocol MUST send a header field `Upload-Draft-Interop-Version` with the interop version as its value to its requests. Its ABNF is
 
@@ -294,13 +285,13 @@ If an upload is interrupted, the client MAY attempt to fetch the offset of the i
 
 The request MUST use the `HEAD` method and include the `Upload-Token` header. The request MUST NOT include the `Upload-Offset` header or the `Upload-Incomplete` header. The server MUST reject the request with the `Upload-Offset` header or the `Upload-Incomplete` header by sending a `400 (Bad Request)` response.
 
-If the server considers the upload associated with this token active, it MUST send back a `204 (No Content)` response. The response MUST include the `Upload-Offset` header set to the current resumption offset for the client. The response MUST include the `Upload-Incomplete` header which is set to true if and only if the upload is incomplete. An upload is considered complete if and only if the server completely and successfully received a corresponding Upload Transfer Procedure ({{upload-transfer}}) request with the `Upload-Incomplete` header being omitted or set to false.
+If the server considers the upload associated with this token active, it MUST send back a `204 (No Content)` response. The response MUST include the `Upload-Offset` header set to the current resumption offset for the client. The response MUST include the `Upload-Incomplete` header which is set to true if and only if the upload is incomplete. An upload is considered complete if and only if the server completely and successfully received a corresponding Upload Creation Procedure ({{upload-creation}}) or Upload Appending Procedure ({{upload-appending}}) request with the `Upload-Incomplete` header being omitted or set to false.
 
-The client MUST NOT perform the Offset Retrieving Procedure ({{offset-retrieving}}) while the Upload Transfer Procedures ({{upload-transfer}}) is in progress.
+The client MUST NOT perform the Offset Retrieving Procedure ({{offset-retrieving}}) while the Upload Creation Procedure ({{upload-creation}}) or the Upload Appending Procedure ({{upload-appending}}) is in progress.
 
-The offset MUST be accepted by a subsequent Upload Transfer Procedure ({{upload-transfer}}). Due to network delay and reordering, the server might still be receiving data from an ongoing transfer for the same token, which in the client perspective has failed. The server MAY terminate any transfers for the same token before sending the response by abruptly terminating the HTTP connection or stream. Alternatively, the server MAY keep the ongoing transfer alive but ignore further bytes received past the offset.
+The offset MUST be accepted by a subsequent Upload Appending Procedure ({{upload-appending}}). Due to network delay and reordering, the server might still be receiving data from an ongoing transfer for the same token, which in the client perspective has failed. The server MAY terminate any transfers for the same token before sending the response by abruptly terminating the HTTP connection or stream. Alternatively, the server MAY keep the ongoing transfer alive but ignore further bytes received past the offset.
 
-The client MUST NOT start more than one Upload Transfer Procedures ({{upload-transfer}}) based on the resumption offset from a single Offset Retrieving Procedure ({{offset-retrieving}}).
+The client MUST NOT start more than one Upload Appending Procedures ({{upload-appending}}) based on the resumption offset from a single Offset Retrieving Procedure ({{offset-retrieving}}).
 
 The response SHOULD include `Cache-Control: no-store` header to prevent HTTP caching.
 
@@ -312,14 +303,53 @@ If the server does not consider the upload associated with this token active, it
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
-upload-draft-interop-version: 1
+upload-draft-interop-version: 2
 
 :status: 204
 upload-offset: 100
 cache-control: no-store
 ~~~
 
-The client MAY automatically start uploading from the beginning using Upload Transfer Procedure ({{upload-transfer}}) if `404 (Not Found)` status code is received. The client SHOULD NOT automatically retry if a status code other than 204 and 404 is received.
+The client MAY automatically start uploading from the beginning using Upload Creation Procedure ({{upload-creation}}) if `404 (Not Found)` status code is received. The client SHOULD NOT automatically retry if a status code other than 204 and 404 is received.
+
+# Upload Appending Procedure {#upload-appending}
+
+The Upload Appending Procedure is used for resuming an existing upload.
+
+The request MUST use the `PATCH` method and include the `Upload-Token` header. The `Upload-Offset` header field ({{upload-offset}}) MUST be set to the resumption offset.
+
+If the end of the request body is not the end of the upload, the `Upload-Incomplete` header field ({{upload-incomplete}}) MUST be set to true.
+
+The server SHOULD respect representation metadata received in the Upload Creation Procedure ({{upload-creation}}) and ignore any representation metadata received in the Upload Appending Procedure ({{upload-appending}}).
+
+If the server does not consider the upload associated with the token in the `Upload-Token` header field active, it MUST respond with `404 (Not Found)` status code.
+
+The client MUST NOT perform multiple upload transfers for the same token using Upload Creation Procedures ({{upload-creation}}) or Upload Appending Procedures ({{upload-appending}}) in parallel to avoid race conditions and data loss or corruption. The server is RECOMMENDED to take measures to avoid parallel upload transfers: The server MAY terminate any ongoing Upload Creation Procedure ({{upload-creation}}) or Upload Appending Procedure ({{upload-appending}}) for the same token. Since the client is not allowed to perform multiple transfers in parallel, the server can assume that the previous attempt has already failed. Therefore, the server MAY abruptly terminate the previous HTTP connection or stream.
+
+If the offset in the `Upload-Offset` header field does not match the offset provided by the immediate previous Offset Retrieving Procedure ({{offset-retrieving}}), or the end offset of the immediate previous incomplete transfer, the server MUST respond with `409 (Conflict)` status code.
+
+The server MUST send the `Upload-Offset` header in the response if it considers the upload active, either when the response is a success (e.g. `201 (Created)`), or when the response is a failure (e.g. `409 (Conflict)`). The value MUST be equal to the end offset of the entire upload, or the begin offset of the next chunk if the upload is still incomplete. The client SHOULD consider the upload failed if the response status code indicates a success but the offset in the `Upload-Offset` header field in the response does not equal to the begin offset plus the number of bytes uploaded in the request.
+
+If the request completes successfully and the entire upload is complete, the server MUST acknowledge it by responding with a successful status code between 200 and 299 (inclusive). Server is RECOMMENDED to use `201 (Created)` response if not otherwise specified. The response MUST NOT include the `Upload-Incomplete` header with the value of true.
+
+If the request completes successfully but the entire upload is not yet complete indicated by the `Upload-Incomplete` header, the server MUST acknowledge it by responding with the `201 (Created)` status code, the `Upload-Incomplete` header set to true.
+
+~~~ example
+:method: PATCH
+:scheme: https
+:authority: example.com
+:path: /upload
+upload-token: :SGVs…SGU=:
+upload-offset: 100
+upload-draft-interop-version: 2
+content-length: 100
+[content (100 bytes)]
+
+:status: 201
+upload-offset: 200
+~~~
+
+The client MAY automatically attempt upload resumption when the connection is terminated unexpectedly, or if a server error status code between 500 and 599 (inclusive) is received. The client SHOULD NOT automatically retry if a client error status code between 400 and 499 (inclusive) is received.
 
 # Upload Cancellation Procedure {#upload-cancellation}
 
@@ -329,7 +359,7 @@ The request MUST use the `DELETE` method and include the `Upload-Token` header. 
 
 If the server has successfully deactivated this token, it MUST send back a `204 (No Content)` response.
 
-The server MAY terminate any ongoing Upload Transfer Procedure ({{upload-transfer}}) for the same token before sending the response by abruptly terminating the HTTP connection or stream.
+The server MAY terminate any ongoing Upload Creation Procedure ({{upload-creation}}) or Upload Appending Procedure ({{upload-appending}}) for the same token before sending the response by abruptly terminating the HTTP connection or stream.
 
 If the server does not consider the upload associated with this token active, it MUST respond with `404 (Not Found)` status code.
 
@@ -341,7 +371,7 @@ If the server does not support cancellation, it MUST respond with `405 (Method N
 :authority: example.com
 :path: /upload
 upload-token: :SGVs…SGU=:
-upload-draft-interop-version: 1
+upload-draft-interop-version: 2
 
 :status: 204
 ~~~
@@ -378,7 +408,7 @@ Upload-Incomplete = sf-boolean
 
 # Redirection
 
-The `301 (Moved Permanently)` status code and the `302 (Found)` status code MUST NOT be used in Offset Retrieving Procedure ({{offset-retrieving}}) and Upload Cancellation Procedure ({{upload-cancellation}}) responses. A `308 (Permanent Redirect)` response MAY be persisted for all subsequent procedures. If client receives a `307 (Temporary Redirect)` response in the Offset Retrieving Procedure ({{offset-retrieving}}), it MAY apply the redirection directly in the immediate subsequent Upload Transfer Procedure ({{upload-transfer}}).
+The `301 (Moved Permanently)` status code and the `302 (Found)` status code MUST NOT be used in Offset Retrieving Procedure ({{offset-retrieving}}) and Upload Cancellation Procedure ({{upload-cancellation}}) responses. A `308 (Permanent Redirect)` response MAY be persisted for all subsequent procedures. If client receives a `307 (Temporary Redirect)` response in the Offset Retrieving Procedure ({{offset-retrieving}}), it MAY apply the redirection directly in the immediate subsequent Upload Appending Procedure ({{upload-appending}}).
 
 # Security Considerations
 
@@ -412,6 +442,12 @@ Specification: This document
 
 --- back
 
+# Changes
+
+## draft-tus-httpbis-resumable-uploads-protocol-00
+
+* Split the Upload Transfer Procedure into the Upload Creation Procedure and the Upload Appending Procedure.
+
 # Acknowledgments
 {:numbered="false"}
 
@@ -423,7 +459,7 @@ TODO acknowledge.
 ## Informational Response
 {:numbered="false"}
 
-The server is allowed to respond to Upload Transfer Procedure ({{upload-transfer}}) requests with a `104 (Upload Resumption Supported)` intermediate response as soon as the server has validated the request. This way, the client knows that the server supports resumable uploads before the complete response for the Upload Transfer Procedure is received. The benefit is the clients can defer starting the actual data transfer until the server indicates full support of the incoming Upload Transfer Procedure (i.e. resumable are supported, the provided upload token is active etc).
+The server is allowed to respond to Upload Creation Procedure ({{upload-creation}}) requests with a `104 (Upload Resumption Supported)` intermediate response as soon as the server has validated the request. This way, the client knows that the server supports resumable uploads before the complete response for the Upload Creation Procedure is received. The benefit is the clients can defer starting the actual data transfer until the server indicates full support of the incoming Upload Creation Procedure (i.e. resumable are supported, the provided upload token is active etc).
 
 On the contrary, support for intermediate responses (the `1XX` range) in existing software is limited or not at all present. Such software includes proxies, firewalls, browsers, and HTTP libraries for clients and server. Therefore, the `104 (Upload Resumption Supported)` status code is optional and not mandatory for the successful completion of an upload. Otherwise, it might be impossible in some cases to implement resumable upload servers using existing software packages. Furthermore, as parts of the current internet infrastructure currently have limited support for intermediate responses, a successful delivery of a `104 (Upload Resumption Supported)` from the server to the client should be assumed.
 
@@ -459,9 +495,9 @@ Following **approaches** have already been considered in the past. All except th
 ## Upload Metadata
 {:numbered="false"}
 
-The Upload Transfer Procedure ({{upload-transfer}}) allows the `Content-Type` and `Content-Disposition` header to be included. They are intended to be a standardized way of communicating the file name and file type, if available. However, this is not without controversy. Some argue that since these headers are already defined in other specifications, it is not necessary to include them here again. Furthermore, the `Content-Disposition` header field's format is not clearly enough defined. For example, it is left open which disposition value should be used in the header. There needs to be more discussion whether this approach is suited or not.
+The Upload Creation Procedure ({{upload-creation}}) allows the `Content-Type` and `Content-Disposition` header to be included. They are intended to be a standardized way of communicating the file name and file type, if available. However, this is not without controversy. Some argue that since these headers are already defined in other specifications, it is not necessary to include them here again. Furthermore, the `Content-Disposition` header field's format is not clearly enough defined. For example, it is left open which disposition value should be used in the header. There needs to be more discussion whether this approach is suited or not.
 
-However, from experience with the tus project, users are often asking for a way to communicate the file name and file type. Therefore, we believe it is help to explicitly include an approach for doing so. 
+However, from experience with the tus project, users are often asking for a way to communicate the file name and file type. Therefore, we believe it is help to explicitly include an approach for doing so.
 
 ## FAQ
 {:numbered="false"}
