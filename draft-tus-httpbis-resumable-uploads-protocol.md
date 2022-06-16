@@ -376,6 +376,20 @@ upload-draft-interop-version: 2
 :status: 204
 ~~~
 
+# Request Identification
+
+The Upload Creation Procedure ({{upload-creation}}) supports arbitrary methods including `PATCH`, therefore it is not possible to identify the procedure of a request purely by its method. The following algorithm is RECOMMENDED to identify the procedure from a request for a generic implementation:
+
+1. The `Upload-Token` header is not present: Not a resumable upload.
+
+2. The `Upload-Offset` header is present: Upload Appending Procedure ({{upload-appending}}).
+
+3. The method is `HEAD`: Offset Retrieving Procedure ({{offset-retrieving}}).
+
+4. The method is `DELETE`: Upload Cancellation Procedure ({{upload-cancellation}}).
+
+5. Otherwise: Upload Creation Procedure ({{upload-creation}}).
+
 # Header Fields
 
 ## Upload-Token
