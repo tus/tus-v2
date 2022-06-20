@@ -295,7 +295,7 @@ The client MUST NOT start more than one Upload Appending Procedures ({{upload-ap
 
 The response SHOULD include `Cache-Control: no-store` header to prevent HTTP caching.
 
-If the server does not consider the upload associated with this token active, it MUST respond with `404 (Not Found)` status code.
+If the server does not consider the upload associated with this token active, it MAY send back a `204 (No Content)` response with the `Upload-Offset` set to 0 if the upload is idempotent and restarting from the beginning is desirable. The server MUST respond with `404 (Not Found)` status code otherwise.
 
 ~~~
 :method: HEAD
@@ -310,7 +310,7 @@ upload-offset: 100
 cache-control: no-store
 ~~~
 
-The client MAY automatically start uploading from the beginning using Upload Creation Procedure ({{upload-creation}}) if `404 (Not Found)` status code is received. The client SHOULD NOT automatically retry if a status code other than 204 and 404 is received.
+The client SHOULD NOT automatically retry if a client error status code between 400 and 499 (inclusive) is received.
 
 # Upload Appending Procedure {#upload-appending}
 
