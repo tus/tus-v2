@@ -462,6 +462,10 @@ Specification: This document
 
 * Split the Upload Transfer Procedure into the Upload Creation Procedure and the Upload Appending Procedure.
 
+## draft-tus-httpbis-resumable-uploads-protocol-01
+
+* Clients auto-retry 404 is no longer allowed and servers now need to explicitly request upload offset 0.
+
 # Acknowledgments
 {:numbered="false"}
 
