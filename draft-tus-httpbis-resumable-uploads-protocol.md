@@ -295,7 +295,7 @@ The client MUST NOT start more than one Upload Appending Procedures ({{upload-ap
 
 The response SHOULD include `Cache-Control: no-store` header to prevent HTTP caching.
 
-If the server does not consider the upload associated with this token active, it MAY send back a `204 (No Content)` response with the `Upload-Offset` set to 0 if the upload is idempotent and restarting from the beginning is desirable. The server MUST respond with `404 (Not Found)` status code otherwise.
+If the server does not consider the upload associated with this token active, it MUST respond with `404 (Not Found)` status code.
 
 ~~~
 :method: HEAD
@@ -464,7 +464,7 @@ Specification: This document
 
 ## draft-tus-httpbis-resumable-uploads-protocol-01
 
-* Clients auto-retry 404 is no longer allowed and servers now need to explicitly request upload offset 0.
+* Clients auto-retry 404 is no longer allowed.
 
 # Acknowledgments
 {:numbered="false"}
