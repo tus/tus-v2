@@ -297,7 +297,7 @@ The response SHOULD include `Cache-Control: no-store` header to prevent HTTP cac
 
 If the server does not consider the upload associated with this token active, it MUST respond with `404 (Not Found)` status code.
 
-The resumption offset can be less than, equal to, or greater than the number of bytes the client already transferred. If the offset is invalid for this upload, or if the client cannot backtrack to this offset and reproduce the same content it has already sent, the upload MUST be considered a failure.
+The resumption offset can be less than, equal to, or greater than the number of bytes the client already transferred. If the offset is invalid for this upload, or if the client cannot backtrack to this offset and reproduce the same content it has already sent, the upload MUST be considered a failure. The client MAY use the Upload Cancellation Procedure ({{upload-cancellation}}) to cancel the upload after rejecting the offset.
 
 ~~~
 :method: HEAD
