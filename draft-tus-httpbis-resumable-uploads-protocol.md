@@ -170,8 +170,7 @@ This example shows how the client, with prior knowledge about the server's resum
 ~~~
 Client                                      Server
 |                                                |
-| POST with Upload-Token, Upload-Offset,         |
-| and Upload-Incomplete                          |
+| POST with Upload-Token and Upload-Incomplete   |
 |----------------------------------------------->|
 |                                                |
 |             201 Created with Upload-Incomplete |
@@ -237,7 +236,6 @@ upload-offset: 100
 :path: /upload
 upload-token: :SGVs…SGU=:
 upload-draft-interop-version: 2
-upload-offset: 0
 upload-incomplete: ?1
 content-length: 25
 [partial content (25 bytes)]
