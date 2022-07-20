@@ -308,7 +308,7 @@ upload-offset: 100
 cache-control: no-store
 ~~~
 
-The client MAY automatically start uploading from the beginning using Upload Creation Procedure ({{upload-creation}}) if `404 (Not Found)` status code is received. The client SHOULD NOT automatically retry if a status code other than 204 and 404 is received.
+The client SHOULD NOT automatically retry if a client error status code between 400 and 499 (inclusive) is received.
 
 # Upload Appending Procedure {#upload-appending}
 
@@ -459,6 +459,10 @@ Specification: This document
 ## draft-tus-httpbis-resumable-uploads-protocol-00
 
 * Split the Upload Transfer Procedure into the Upload Creation Procedure and the Upload Appending Procedure.
+
+## draft-tus-httpbis-resumable-uploads-protocol-01
+
+* Clients auto-retry 404 is no longer allowed.
 
 # Acknowledgments
 {:numbered="false"}
