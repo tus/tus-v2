@@ -446,7 +446,7 @@ Related information: n/a
 
 This specification registers the following entry in the "HTTP Status Codes" registry:
 
-Code: 104
+Code: 104 (suggested value)
 
 Description: Upload Resumption Supported
 
