@@ -295,6 +295,8 @@ The response SHOULD include `Cache-Control: no-store` header to prevent HTTP cac
 
 If the server does not consider the upload associated with this token active, it MUST respond with `404 (Not Found)` status code.
 
+The resumption offset can be less than or equal to the number of bytes the client has already sent. The client MAY reject an offset which is greater than the number of bytes it has already sent during this upload. The client is expected to handle backtracking of a reasonable length. If the offset is invalid for this upload, or if the client cannot backtrack to the offset and reproduce the same content it has already sent, the upload MUST be considered a failure. The client MAY use the Upload Cancellation Procedure ({{upload-cancellation}}) to cancel the upload after rejecting the offset.
+
 ~~~
 :method: HEAD
 :scheme: https
@@ -456,7 +458,11 @@ Specification: This document
 
 # Changes
 
-## draft-tus-httpbis-resumable-uploads-protocol-00
+## Since draft-tus-httpbis-resumable-uploads-protocol-01
+
+* Clarifying backtracking and preventing skipping ahead during the Offset Receiving Procedure.
+
+## Since draft-tus-httpbis-resumable-uploads-protocol-00
 
 * Split the Upload Transfer Procedure into the Upload Creation Procedure and the Upload Appending Procedure.
 
