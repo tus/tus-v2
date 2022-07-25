@@ -461,14 +461,11 @@ Specification: This document
 ## Since draft-tus-httpbis-resumable-uploads-protocol-01
 
 * Clarifying backtracking and preventing skipping ahead during the Offset Receiving Procedure.
+* Clients auto-retry 404 is no longer allowed.
 
 ## Since draft-tus-httpbis-resumable-uploads-protocol-00
 
 * Split the Upload Transfer Procedure into the Upload Creation Procedure and the Upload Appending Procedure.
-
-## draft-tus-httpbis-resumable-uploads-protocol-01
-
-* Clients auto-retry 404 is no longer allowed.
 
 # Acknowledgments
 {:numbered="false"}
