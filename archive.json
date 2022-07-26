@@ -1,0 +1,3586 @@
+{
+  "magic": "E!vIA5L86J2I",
+  "timestamp": "2022-07-26T01:08:54.475061+00:00",
+  "repo": "tus/tus-v2",
+  "labels": [
+    {
+      "name": "bug",
+      "description": "Something isn't working",
+      "color": "d73a4a"
+    },
+    {
+      "name": "documentation",
+      "description": "Improvements or additions to documentation",
+      "color": "0075ca"
+    },
+    {
+      "name": "duplicate",
+      "description": "This issue or pull request already exists",
+      "color": "cfd3d7"
+    },
+    {
+      "name": "enhancement",
+      "description": "New feature or request",
+      "color": "a2eeef"
+    },
+    {
+      "name": "good first issue",
+      "description": "Good for newcomers",
+      "color": "7057ff"
+    },
+    {
+      "name": "help wanted",
+      "description": "Extra attention is needed",
+      "color": "008672"
+    },
+    {
+      "name": "invalid",
+      "description": "This doesn't seem right",
+      "color": "e4e669"
+    },
+    {
+      "name": "question",
+      "description": "Further information is requested",
+      "color": "d876e3"
+    },
+    {
+      "name": "wontfix",
+      "description": "This will not be worked on",
+      "color": "ffffff"
+    }
+  ],
+  "issues": [
+    {
+      "number": 2,
+      "id": "I_kwDOEkJfuM4-Ul-A",
+      "title": "IETF Communication",
+      "url": "https://github.com/tus/tus-v2/issues/2",
+      "state": "OPEN",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "This issue is intended to track our communicating with the IETF, their working groups etc. \r\n\r\nThere is an upcoming IETF meeting in March 2022. More information is available at https://www.ietf.org/how/meetings/upcoming/. Our plan is to reach out with a first version of the draft before this deadline.",
+      "createdAt": "2021-11-05T08:47:50Z",
+      "updatedAt": "2021-11-05T08:47:50Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 3,
+      "id": "I_kwDOEkJfuM4-UqMM",
+      "title": "discussion: Feature Detection / Service Discovery",
+      "url": "https://github.com/tus/tus-v2/issues/3",
+      "state": "OPEN",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "This issue is intended to discuss **if** and in **what form** we want to have explicit support or feature detection (we called it service discovery in earlier discussions, but this name is probably ill-suited).\r\n\r\nThe idea is to allow resumable uploads to be transparently implemented by HTTP clients. This means that application developers just keep using the same API of their HTTP library as they have done in the past with traditional, non-resumable uploads. Once the HTTP library gets updated (e.g. because mobile OS or browsers start implementing resumable uploads), the HTTP library can transparently decide to use resumable uploads without explicit configuration by the application developer. Of course, in order to use resumable uploads, the HTTP library needs to know whether the server supports resumable uploads. If no support is detected, the HTTP library should use the traditional, non-resumable upload technique. We call this process feature detection.\r\n\r\nIdeally, the technique used for feature detection meets following **criteria** (there might not one approach which fits all requirements, so we have to prioritize them):\r\n\r\n1. Avoid additional roundtrips by the client, if possible (i.e. an additional HTTP request by the client should be avoided).\r\n2. Be backwards compatible to HTTP/1.1 and existing network infrastructure: This means to avoid using new features in HTTP/2, or features which might require changes to existing network infrastructure (e.g. nginx or HTTP libraries)\r\n3. Conserve the user's privacy (i.e. the feature detection should not leak information other third-parties about which URLs have been connected to)\r\n\r\nFollowing **approaches** have already been considered:\r\n\r\n**Include a support statement in the SETTINGS frame.** The SETTINGS frame is a HTTP/2 feature and is sent by the server to the client to exchange information about the current connection. The idea was to include an additional statement in this frame, so the client can detect support for resumable uploads without an additional roundtrip. The problem is that this is not compatible with HTTP/1.1. Furthermore, the SETTINGS frame is intended for information about the current connection (not bound to a request/response) and might not be persisted when transmitted through a proxy.\r\n\r\n**Include a support statement in the DNS record.** The client can detect support when resolving a domain name. Of course, DNS is not semantically the correct layer. Also, DNS might not be involved if the record is chached or retrieved from a hosts files.\r\n\r\n**Send a HTTP request to ask for support.** This is the easiest approach where the client sends an OPTIONS request and uses the response to determine if the server indicates support for resumable uploads. An alternative is that the client sends the request to a well-known URL to obtain this response, e.g. `/.well-known/resumable-uploads`. Of course, while being fully backwards-compatible, it requires an additional roundtrip.\r\n\r\n**Include a support statement in previous responses.** In many cases, the file upload is not the first time that the client connects to the server. Often additional requests are sent beforehand for authentication, data retrieval etc. The responses for those requests can also include a header which indicates support for resumable uploads. There are two options:\r\n- Use the standardized `Alt-Svc` response header. However, it has been indicated to us that this header might be reworked in the future and could also be semantically different from our intended usage.\r\n- Use a new response header `Resumable-Uploads: https://example.org/files/*` to indicate under which endpoints support for resumable uploads is available.\r\n\r\n**Send a 104 intermediate response to indicate support.** The clients normally starts a traditional upload and includes a header indicate that it supports resumable uploads (e.g. `Upload-Offset: 0`). If the server also supports resumable uploads, it will immediately respond with a 104 intermediate response to indicate its support, before further processing the request. This way the client is informed during the upload whether it can resume from possible connection errors or not. While an additional roundtrip is avoided, the problem with that solution is that many HTTP server libraries do not support sending custom 1XX responses and that some proxies may not be able to handle new 1XX status codes correctly.",
+      "createdAt": "2021-11-05T09:11:53Z",
+      "updatedAt": "2021-11-17T22:37:14Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Alternatively, @smatsson proposed an alternative fallback where the clients assume the server supports resumable uploads and makes an optimistic HEAD request, if an error occurs:\r\n\r\n> The spec currently states:\r\n>\r\n>> If the client has no knowledge of whether the server supports resumable upload, the Upload Transfer Procedure MAY be used with some additional constraints. In particular, the Upload-Offset header and the Upload-Incomplete header MUST NOT be sent in the request if the server support is unclear. This allows the upload to function as if it is a regular upload.\r\n>\r\n> I was thinking that if the client always includes the headers, what would we break in the terms of backwards compatibility? If the server does not know of these headers it will do nothing with them. If it does understand them, well then we are probably dealing with a server that supports resumability. If the connection breaks down, the client would have a Upload-Token that could be used for the Offset Retrieving Procedure. This way the client could always perform an Offset Retrieving request when the connection breaks down, which would amount to a round trip, but we would always get resumability if the server supports it and we would not need to perform the extra round trip if everything went OK. To solve the issue with switching networks we should still allow the 104 informational response as an optional feature if the server supports it.",
+          "createdAt": "2021-11-17T22:37:13Z",
+          "updatedAt": "2021-11-17T22:37:13Z"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "id": "I_kwDOEkJfuM4--zrT",
+      "title": "Existing implementations",
+      "url": "https://github.com/tus/tus-v2/issues/4",
+      "state": "CLOSED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "This list collects existing implementations of the protocol. These are mostly experimental and meant for exploration.\r\n\r\n* tusd: https://github.com/tus/tusd/pull/568\r\n* tusdotnet: https://github.com/tusdotnet/tusdotnet/tree/POC/tus2",
+      "createdAt": "2021-11-17T21:31:12Z",
+      "updatedAt": "2022-02-24T14:35:52Z",
+      "closedAt": "2022-02-24T14:35:52Z",
+      "comments": [
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Maybe we can put it in a wiki page?\r\n\r\nhttps://github.com/tus/tus-v2/wiki",
+          "createdAt": "2021-11-18T17:06:29Z",
+          "updatedAt": "2021-11-18T17:06:29Z"
+        },
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "I have added them to the README, so everyone can find them easily: https://github.com/tus/tus-v2/commit/07914d8acec69e841560d9aaabf383ceff547e3b",
+          "createdAt": "2022-02-24T14:35:52Z",
+          "updatedAt": "2022-02-24T14:35:52Z"
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "id": "I_kwDOEkJfuM4---M-",
+      "title": "discussion: Upload-Token cryptographic strength suggestion",
+      "url": "https://github.com/tus/tus-v2/issues/5",
+      "state": "CLOSED",
+      "author": "justinruggles",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "current wording:\r\n```\r\nThe value of the token SHOULD be a byte sequence\r\nwith a minimum of 256-bit (16 byte) cryptographically-secure\r\nrandom binary data, or a cryptographic token with equivalent\r\nor stronger security properties.\r\n```\r\n\r\n1. There is a typo. Either it's 256-bit (32 byte) or 128-bit (16-byte).\r\n2. I think we should discuss the value in giving a specific recommendation\r\n\r\nI think the real goal is that the Upload-Token should contain or encapsulate an identifier that applies to a single upload and is sufficiently unique to the upload server system. One alternative to having the `SHOULD` with specific requirements could be to give a MUST for system-dependent uniqueness and a 128-bit cryptographically random byte sequence as one example.\r\n",
+      "createdAt": "2021-11-17T22:27:44Z",
+      "updatedAt": "2021-12-16T15:31:48Z",
+      "closedAt": "2021-12-16T15:31:48Z",
+      "comments": [
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "This sentencing was improved by https://github.com/tus/tus-v2/pull/7",
+          "createdAt": "2021-12-16T15:31:47Z",
+          "updatedAt": "2021-12-16T15:31:47Z"
+        }
+      ]
+    },
+    {
+      "number": 11,
+      "id": "I_kwDOEkJfuM4_EAOT",
+      "title": "What is \"Upload Creation Procedure\"?",
+      "url": "https://github.com/tus/tus-v2/issues/11",
+      "state": "CLOSED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "There's one mention of \"Upload Creation Procedure\" in the document, what is it? Perhaps a hangover from some renaming activity?",
+      "createdAt": "2021-11-19T00:55:10Z",
+      "updatedAt": "2021-12-16T15:17:10Z",
+      "closedAt": "2021-12-16T15:17:10Z",
+      "comments": [
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "This is fixed in #7",
+          "createdAt": "2021-11-19T00:56:11Z",
+          "updatedAt": "2021-11-19T00:56:11Z"
+        },
+        {
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Since the PR was merged, closing this.",
+          "createdAt": "2021-12-16T15:17:10Z",
+          "updatedAt": "2021-12-16T15:17:10Z"
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "id": "I_kwDOEkJfuM4_EDGC",
+      "title": "Why are there three ways to encode the upload token?",
+      "url": "https://github.com/tus/tus-v2/issues/12",
+      "state": "CLOSED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The document defines:\r\n\r\n```\r\nUpload-Token = sf-binary / sf-string / sf-token\r\n```\r\n\r\nbut it doesn't really explain why there are three formats. Notionally this could be three different wire encoding of the same value, which seems redundant. There are also possibilities for edge cases to come in, for instance does the same encoding have to be used across different requests?\r\n\r\nFurthermore, if the token is generated as suggested and is a byte sequence but sent as a sf-string, you'll probably need to base64 it. That is not documented here and should be if that's the intention.\r\n\r\nBut, for lack of justification of the options, I'll make an alternative suggestion - just use the single sf-binary and be done with it.",
+      "createdAt": "2021-11-19T01:14:48Z",
+      "updatedAt": "2021-12-16T15:30:16Z",
+      "closedAt": "2021-12-16T15:30:16Z",
+      "comments": [
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "It was originally just `sf-binary` as shown in the examples.\r\n\r\n@justinruggles told me about their use case where they want server to generate the token, which is then sent to the client to use. Is `sf-binary` OK for your use case?",
+          "createdAt": "2021-11-19T01:24:49Z",
+          "updatedAt": "2021-11-19T01:24:49Z"
+        },
+        {
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "It seems even if a server wants to create a token, or either endpoint wants to use something short like \"mycooltoken123\" it is still trivial to encode that as sf-binary (base64 it and add colons). Maybe I'm missing something though.",
+          "createdAt": "2021-11-19T01:33:08Z",
+          "updatedAt": "2021-11-19T01:33:36Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Yeah, I suppose so. It would just waste a bit of space encoding if it's already an ASCII string",
+          "createdAt": "2021-11-19T01:45:01Z",
+          "updatedAt": "2021-11-19T01:45:01Z"
+        },
+        {
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Since the premise of this document is resuming uploads, and those could be big, I'm not super convinced that optimizing for header field value size is a strong requirement.",
+          "createdAt": "2021-11-19T02:08:30Z",
+          "updatedAt": "2021-11-19T02:08:30Z"
+        },
+        {
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "sf-binary isn't ideal because it would basically be double-encoding in some cases, but it would still work. I'm ok with it.",
+          "createdAt": "2021-11-19T02:15:36Z",
+          "updatedAt": "2021-11-19T02:15:36Z"
+        },
+        {
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "the use case I'm considering is something like a JWT or PASETO token that encapsulates the unique upload ID as a claim. So it would be verifiable as a valid server-generated token and unique ID without having to be stored on the server.",
+          "createdAt": "2021-11-19T02:20:41Z",
+          "updatedAt": "2021-11-19T02:20:41Z"
+        },
+        {
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "That sounds more valid than simple byte saving. Is something like you describe already in practice or likely to be? \r\n\r\nIf there are valid use cases that's cool but without some colour text the current definition sticks out. I'm thinking the document might benefit from a separate section specifically to discuss token usage considerations. Some of that is already in the Security considerations section but I would extract it and simply reference back to the token specific stuff.",
+          "createdAt": "2021-11-19T02:35:11Z",
+          "updatedAt": "2021-11-19T02:35:11Z"
+        },
+        {
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "It would be nice to be able to do that in practice, yes. Then our API could give out a fixed upload URL and secure token to use for Upload-Token rather than including only a random ID for the token and securing it with the URL as a query param, for example. I would be ok either way. I just prefer the flexibility if it makes sense generally.",
+          "createdAt": "2021-11-19T02:47:09Z",
+          "updatedAt": "2021-11-19T02:47:09Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Worth noting that the double encoding overhead is temporary, as one of the goal of structured field is to switch to a binary serialization format.\r\n\r\nI do agree that having the ambiguity of equality between representations is a problem. I don't know if `hello` and `:aGVsbG8=:` will be treated differently.",
+          "createdAt": "2021-11-19T02:49:02Z",
+          "updatedAt": "2021-11-19T02:49:02Z"
+        },
+        {
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I'm no JWT expert, are you able to illustrate or give an example @justinruggles ?",
+          "createdAt": "2021-11-19T03:26:29Z",
+          "updatedAt": "2021-11-19T03:26:29Z"
+        },
+        {
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "The server would first generate the unique ID as a random byte sequence. That ID would go into the the json payload as a custom claim, along with other standard claims like expiration. Then the JWT is signed with a secret key and encoded as base64 parts separated by periods. If the header needs to be sf-binary, the final token would then have to be base64 encoded again.\n\nPASETO is similar in concept, but the payload is encrypted and has stricter cryptographic requirements.\n",
+          "createdAt": "2021-11-19T03:39:50Z",
+          "updatedAt": "2021-11-19T03:39:50Z"
+        },
+        {
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Example: \r\n![image](https://user-images.githubusercontent.com/108822/142648270-b7760c0d-9b39-4bf0-ad5a-bcf1c5415f2e.png)\r\n\r\nThen converting that to sf-binary would require re-encoding the final JWT, which would look like:\r\n```\r\nUpload-Token: :ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SjFjR3h2WVdSZmFXUWlPaUl5TVRoMlZXaHhUbGhJUlZSNE5HbFdSRU5RU0hOU1FtVlZiREVpTENKcGMzTWlPaUowZFhNdGMyVnlkbVZ5SWl3aVpYaHdJam94TmpNM05ESXhPVFEyTENKcFlYUWlPakUyTXpjek16VTFORFo5LlhGcVRTUkpndTBmOXVWZFdRekxnMWdiLXB3WlBPV0p2VnJPOVNoODQ1akk=:\r\n```",
+          "createdAt": "2021-11-19T15:32:31Z",
+          "updatedAt": "2021-11-19T15:32:31Z"
+        },
+        {
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Thanks for the explanation that makes it a lot clearer. So would sf-token suffice? Who needs sf-string?",
+          "createdAt": "2021-11-19T15:48:31Z",
+          "updatedAt": "2021-11-19T15:48:31Z"
+        },
+        {
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Yes, sf-token would suffice",
+          "createdAt": "2021-11-19T16:08:55Z",
+          "updatedAt": "2021-11-19T16:08:55Z"
+        },
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "As discussed in our bi-weekly call, we are going to move to only allow sf-binary. If we get more feedback about this, we can reconsider.",
+          "createdAt": "2021-12-16T15:28:55Z",
+          "updatedAt": "2021-12-16T15:28:55Z"
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "id": "I_kwDOEkJfuM4_EGRc",
+      "title": "Registration of header fields",
+      "url": "https://github.com/tus/tus-v2/issues/13",
+      "state": "OPEN",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Registering header fields has changed a bit recently, see https://www.iana.org/assignments/http-fields/http-fields.xhtml\r\n\r\nWe probably don't need to do anything right now but should revisit this once we're further along the process",
+      "createdAt": "2021-11-19T01:42:27Z",
+      "updatedAt": "2021-11-19T02:10:06Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 16,
+      "id": "I_kwDOEkJfuM4_EJsO",
+      "title": "State on which HTTP messages the header field values can appear",
+      "url": "https://github.com/tus/tus-v2/issues/16",
+      "state": "CLOSED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "_This seems a bit up in the air so I held of on a PR._ \r\n\r\nWhich endpoint can send the new header fields is implied but not stated explicity. We can be clearer by stating it like \"request header field\" for client-only headers, \"response header field\" for server-only headers, or \"request and response header field\" if it can be used by both.",
+      "createdAt": "2021-11-19T02:13:03Z",
+      "updatedAt": "2021-12-16T14:55:13Z",
+      "closedAt": "2021-12-16T14:55:13Z",
+      "comments": [
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "`Upload-Token` is \"request header field\", `Upload-Offset` and `Upload-Incomplete` are both \"request and response header field\".",
+          "createdAt": "2021-11-19T02:27:57Z",
+          "updatedAt": "2021-11-19T02:27:57Z"
+        }
+      ]
+    },
+    {
+      "number": 20,
+      "id": "I_kwDOEkJfuM5Ag52d",
+      "title": "Remove the mention of `file` from procedures",
+      "url": "https://github.com/tus/tus-v2/issues/20",
+      "state": "CLOSED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "We have multiple mentions of file upload in the description of the Upload Transfer Procedures. I think file upload is fine for examples, but we should rephrase procedures so that they apply more than just to file uploads.",
+      "createdAt": "2021-12-16T15:53:39Z",
+      "updatedAt": "2022-01-06T11:24:06Z",
+      "closedAt": "2022-01-06T11:24:06Z",
+      "comments": []
+    },
+    {
+      "number": 21,
+      "id": "I_kwDOEkJfuM5Ag6rn",
+      "title": "\"resources allocated for\" vs \"record of\"",
+      "url": "https://github.com/tus/tus-v2/issues/21",
+      "state": "CLOSED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Standardizing on the phrasing \"resources allocated for\" vs \"record of\" as they mean the same thing in the draft",
+      "createdAt": "2021-12-16T15:56:51Z",
+      "updatedAt": "2022-01-06T11:34:37Z",
+      "closedAt": "2022-01-06T11:34:37Z",
+      "comments": []
+    },
+    {
+      "number": 24,
+      "id": "I_kwDOEkJfuM5AvMZJ",
+      "title": "Confusing use of Content-Disposition",
+      "url": "https://github.com/tus/tus-v2/issues/24",
+      "state": "CLOSED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "https://tus.github.io/tus-v2/draft-tus-resumable-uploads-protocol.html#section-4-8 currently says:\r\n\r\n> The client MAY send the metadata of the file using headers such as Content-Type (see Section 8.3 of [HTTP] and Content-Disposition [RFC6266] when starting a new upload. It is OPTIONAL for the client to repeat the metadata when resuming an upload.\r\n\r\nThere's a PR that tweaks the text but it still leaves content-disposition there, which I find confusing because [RFC6266](https://datatracker.ietf.org/doc/html/rfc6266) states that Content-Disposition is a response header (not a request one), We shouldn't be offhandledly recommending breaking HTTP semantic rules. If use of Content-Disposition on requests is a valuable feature for resumable uploads, we probably need to pursue that with more detail.\r\n\r\n",
+      "createdAt": "2021-12-21T18:45:46Z",
+      "updatedAt": "2022-01-19T21:31:46Z",
+      "closedAt": "2022-01-19T21:31:46Z",
+      "comments": [
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Addressed in https://github.com/tus/tus-v2/pull/35",
+          "createdAt": "2022-01-19T21:31:45Z",
+          "updatedAt": "2022-01-19T21:31:45Z"
+        }
+      ]
+    },
+    {
+      "number": 40,
+      "id": "I_kwDOEkJfuM5C9uT5",
+      "title": "Consider renaming the draft to target httpbis",
+      "url": "https://github.com/tus/tus-v2/issues/40",
+      "state": "CLOSED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Internet-Draft naming conventions enocurage documents to include the name of the working group they are related to. Although the document is not adopted, our best estimation now is that the HTTP WG is the right venue. So let's add `httpbis` into the various place it should be before publication.",
+      "createdAt": "2022-02-03T19:33:58Z",
+      "updatedAt": "2022-02-07T13:47:23Z",
+      "closedAt": "2022-02-07T13:47:23Z",
+      "comments": []
+    },
+    {
+      "number": 43,
+      "id": "I_kwDOEkJfuM5Ege7D",
+      "title": "Update the example implementation",
+      "url": "https://github.com/tus/tus-v2/issues/43",
+      "state": "OPEN",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "The example server in this repository at https://github.com/tus/tus-v2/tree/master/examples does not cover the latest changes we have made to it. We should invest some time to make it compliant to our current draft.",
+      "createdAt": "2022-02-24T14:37:05Z",
+      "updatedAt": "2022-02-24T14:37:05Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 44,
+      "id": "I_kwDOEkJfuM5EhhTy",
+      "title": "Write on mailing list to showcase and get feedback",
+      "url": "https://github.com/tus/tus-v2/issues/44",
+      "state": "CLOSED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "The next step is to write a mail to the HTTP WG mailing list (https://lists.w3.org/Archives/Public/ietf-http-wg/). Some content I would like to include:\r\n\r\n- Why are resumable uploads useful (similar to the abstract)?\r\n- Explain that this work is related to the tus project.\r\n- Mention that the tus project has seen adoption, so people are interested in standardized upload protocols and ready-to-use software.\r\n- Mention that many services also have proprietary approach (maybe?)\r\n- Mention that tus has been discussed on the mailing list before (maybe?)",
+      "createdAt": "2022-02-24T18:53:33Z",
+      "updatedAt": "2022-04-01T09:52:30Z",
+      "closedAt": "2022-04-01T09:52:30Z",
+      "comments": [
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Done, see #45.",
+          "createdAt": "2022-04-01T09:52:30Z",
+          "updatedAt": "2022-04-01T09:52:30Z"
+        }
+      ]
+    },
+    {
+      "number": 48,
+      "id": "I_kwDOEkJfuM5Lswxs",
+      "title": "Ambiguous paragraph in Upload Transfer Procedure",
+      "url": "https://github.com/tus/tus-v2/issues/48",
+      "state": "CLOSED",
+      "author": "nhedger",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "While reading the `Upload Transfer Procedure`, I found the following paragraph ambiguous.\r\n\r\n[Section 4-4](https://tus.github.io/tus-v2/draft-tus-httpbis-resumable-uploads-protocol.html#section-4-4)\r\n> The request MUST include the Upload-Token header field ([Section 7.1](https://tus.github.io/tus-v2/draft-tus-httpbis-resumable-uploads-protocol.html#upload-token)) which uniquely identifies an upload. The client MUST NOT reuse the token for a different upload.\r\n\r\nWhile it correctly states that the `Upload-Token` MUST be included, it does not say what the server's response should be in that case. I could not find anywhere else in the document instructions for handling this case. Is this by design or did I miss anything ?\r\n\r\n1. If the `Upload-Token` is always required (which the paragraph suggests), I would probably expect the server to reject the request with status `400`.\r\n2. If the `Upload-Token` is not always required, perhaps to allow the same `[http verb, endpoint]` combo to be used differently than for a file upload, it might be useful to explicitly state it.\r\n\r\nCheers.",
+      "createdAt": "2022-06-13T22:27:24Z",
+      "updatedAt": "2022-06-16T21:01:23Z",
+      "closedAt": "2022-06-16T21:01:23Z",
+      "comments": [
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Good point. Will clarify in the next draft.\r\n\r\nThe intention is to allow a regular upload to be upgraded to a resumable upload, so the server should usually support both on the same endpoint. Missing `Upload-Token` means the upload isn't resumable.",
+          "createdAt": "2022-06-13T23:15:28Z",
+          "updatedAt": "2022-06-13T23:15:28Z"
+        }
+      ]
+    },
+    {
+      "number": 51,
+      "id": "I_kwDOEkJfuM5MLWaW",
+      "title": "Add note about not supporting parallel chunked uploads",
+      "url": "https://github.com/tus/tus-v2/issues/51",
+      "state": "CLOSED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Add note about not supporting parallel chunked uploads.\r\n\r\nIt's brought up because resumable download supports parallel chunked downloads but we have no intention to support parallel chunked uploads.",
+      "createdAt": "2022-06-21T07:55:44Z",
+      "updatedAt": "2022-07-19T14:38:38Z",
+      "closedAt": "2022-07-19T14:38:38Z",
+      "comments": [
+        {
+          "author": "gregw",
+          "authorAssociation": "NONE",
+          "body": "This is made clear in [section 6](https://datatracker.ietf.org/doc/html/draft-tus-httpbis-resumable-uploads-protocol-01#section-6) but a note in the intro saying that it is so (and different to range requests) might be a nice-to-have.",
+          "createdAt": "2022-06-21T08:27:41Z",
+          "updatedAt": "2022-06-21T08:27:41Z"
+        }
+      ]
+    },
+    {
+      "number": 52,
+      "id": "I_kwDOEkJfuM5MLW5z",
+      "title": "Can server skip ahead?",
+      "url": "https://github.com/tus/tus-v2/issues/52",
+      "state": "CLOSED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Can server skip ahead using Offset Retrieving Procedure? Current thinking is there is no harm in allowing it.",
+      "createdAt": "2022-06-21T07:57:25Z",
+      "updatedAt": "2022-07-25T08:19:06Z",
+      "closedAt": "2022-07-25T08:19:06Z",
+      "comments": [
+        {
+          "author": "gregw",
+          "authorAssociation": "NONE",
+          "body": "I also see no harm in skipping forward.  \r\n\r\nBut once it has done so, can it skip back to any gap in the bytes?  ie must the offset generated by the server be monotonically increasing?\r\n\r\nI think it is OK to send an offset less that a previous one, so long as #53 requires that any resumed bytes are identical to what was originally sent (or would have been sent).\r\n\r\n\r\n ",
+          "createdAt": "2022-06-21T08:25:28Z",
+          "updatedAt": "2022-06-21T08:25:28Z"
+        },
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Personally I would vote against allow this. I do not really see a use case but it would require more complexity in the client implementations. I like to understand resumable uploads as append-only files. Each transferred chunk simply added to the end of the current upload. With this context, my answers for the other questions would be:\r\n\r\n> can it skip back to any gap in the bytes?\r\n\r\nNo. \r\n\r\n> ie must the offset generated by the server be monotonically increasing?\r\n\r\nYes. This guarantee of monotonically increasing offsets can allow for great reduction of complexity for clients and server compared to when client and server must handle basically arbitrary offsets.",
+          "createdAt": "2022-07-19T14:35:15Z",
+          "updatedAt": "2022-07-19T14:35:15Z"
+        }
+      ]
+    },
+    {
+      "number": 53,
+      "id": "I_kwDOEkJfuM5MLYh_",
+      "title": "How does a client handle backtracking?",
+      "url": "https://github.com/tus/tus-v2/issues/53",
+      "state": "CLOSED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "If the request body is dynamically generated and the server backtracks to an offset that's no longer available, what should a client do?\r\n\r\nIf the server backtracks to 0, could the client upload a different thing? (My thinking is no)",
+      "createdAt": "2022-06-21T08:01:58Z",
+      "updatedAt": "2022-07-25T14:21:01Z",
+      "closedAt": "2022-07-25T14:21:01Z",
+      "comments": [
+        {
+          "author": "gregw",
+          "authorAssociation": "NONE",
+          "body": "A client that is sending a dynamically generated body that cannot be regenerated exactly MUST NOT send an upload-token\r\n\r\nAlso a resumed request must send identical bytes to any already sent.\r\n\r\n\r\n\r\n",
+          "createdAt": "2022-06-21T08:22:57Z",
+          "updatedAt": "2022-06-21T08:22:57Z"
+        },
+        {
+          "author": "gregw",
+          "authorAssociation": "NONE",
+          "body": "I also think a note in the security implications about non-idempotent requests would be good.",
+          "createdAt": "2022-06-21T08:28:41Z",
+          "updatedAt": "2022-06-21T08:28:41Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I think how the content is generated shouldn\u2019t be the focus. It works fine as long as the client can reproduce the exact same bytes, so that requirement alone should be sufficient.\r\n\r\nWe should also mention upload cancellation in case that the client cannot resume.",
+          "createdAt": "2022-06-21T08:47:44Z",
+          "updatedAt": "2022-06-21T08:47:44Z"
+        },
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "I can share some details on how we handle backtracking in tus-js-client and tus-java-client. Basically, we divide data sources into two categories:\r\n\r\n1. Seekable data sources, where we can easily seek back to any position of the data source without any additional buffering. Examples are files on disk or in-memory blobs. Backtracking for them is easy and non-problematic.\r\n2. Non-seekable data sources, which are generated dynamically and are not permanently stored on disk or in-memory. As such, seeking backwards is not possible. Examples are web cam streams, streaming output from other programs etc.\r\n\r\nFor non-seekable data sources, the client forces the end user to specify a maximum request payload size, which is the maximum amount of bytes in a single Upload Transfer Procedure. If the entire upload size exceeds this payload size, the upload has to be split across multiple consecutive Upload Transfer Procedures, which is easily possible.\r\n\r\nThe clue is that the client will buffer the entire data that it sends in this Upload Transfer Procedure (either in memory or on disk). If this procedure gets interrupted due to connection issues, the client can simply backtrack to any position in this Upload Transfer Procedure and resume from there. If the Upload Transfer Procedure is complete, the client will simply discard the previous buffer, and read the next chunk of data to fill up the new buffer for the next Upload Transfer Procedure. We can safely discard the previous buffer because the Upload-Offset header in the response guarantees us the server has successfully saved all of the upload until this offset.\r\n\r\nThe maximum request payload size allows to balance between smaller buffer usage and larger request sizes (for less overhead).",
+          "createdAt": "2022-07-19T15:21:11Z",
+          "updatedAt": "2022-07-19T15:21:11Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Yes, that makes a lot of sense. What I'm thinking about is implementing a rolling window buffer (maybe the last 1MB, but will adjust based on telemetry) in the case that the content is dynamically generated. Having chunked uploads is definitely more reliable, since you get real confirmation from the server that a chunk has been received, but in our situation if we are not aware of server support, we can't start chunking uploads.",
+          "createdAt": "2022-07-19T19:39:49Z",
+          "updatedAt": "2022-07-19T19:39:49Z"
+        },
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Your approach is more optimistic and sounds like an best-effort approach without strict guarantees. But that might be OK, depending on your application and situation.\r\n\r\nMaybe in the future it will be possible to receive new Upload-Offsets using multiple intermediate 1XX responses, so the client has guarantees about the uploaded data without having to use multiple Upload Transfer Procedures. However, I don't know if multiple intermediate responses are allowed right now in HTTP.\r\n\r\nI think the tus v2 specification should not force clients to a specific behavior regarding backtracking, so they can choose how to handle such situations. But we can add recommendations so people know how to handle it.",
+          "createdAt": "2022-07-20T07:34:42Z",
+          "updatedAt": "2022-07-20T07:34:42Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Yes, multiple intermediate responses are allowed. It could work, sort of like an HTTP-level ACK.\r\n\r\nAgreed, we don't need to specify how to handle backtracking, just need to mention that backtracking is expected and should be handled gracefully.",
+          "createdAt": "2022-07-21T05:05:57Z",
+          "updatedAt": "2022-07-21T05:05:57Z"
+        }
+      ]
+    }
+  ],
+  "pulls": [
+    {
+      "number": 1,
+      "id": "PR_kwDOEkJfuM4tdosb",
+      "title": "Initial draft update",
+      "url": "https://github.com/tus/tus-v2/pull/1",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "We have ongoing discussions to merge Upload Creation Procedure and Upload Appending Procedure, which hasn't been implemented in the draft yet.",
+      "createdAt": "2021-10-20T22:03:53Z",
+      "updatedAt": "2021-11-18T21:40:07Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "155aab60ee0b7434ec031648d58cd34a8c4ea6ba",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "guoye_zhang/draft",
+      "headRefOid": "f92e2ef28b96e1d6d17e1e175052e9d0bb3d9aae",
+      "closedAt": "2021-11-05T08:39:48Z",
+      "mergedAt": "2021-11-05T08:39:48Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "d6dbfe85361619e99107d05b277793749ff8665b"
+      },
+      "comments": [
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "As discussed in our latest meeting, I will merge this PR. For each topic that we want to discuss, it is best to open a separate issue.",
+          "createdAt": "2021-11-05T08:39:35Z",
+          "updatedAt": "2021-11-05T08:39:35Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4uy-bF",
+          "commit": {
+            "abbreviatedOid": "06694c3"
+          },
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-10-21T00:49:11Z",
+          "updatedAt": "2021-10-21T00:56:40Z",
+          "comments": [
+            {
+              "originalPosition": 149,
+              "body": "Specifying the cryptographic security seems a bit beyond scope here. Could that be a recommendation rather than part of the larger MUST statement? For example, one may want to make this a system-specific unique ID via some other means and cryptographically sign it or secure it in some other way, rather than being required to include a random binary token.",
+              "createdAt": "2021-10-21T00:49:11Z",
+              "updatedAt": "2021-10-21T00:56:40Z"
+            },
+            {
+              "originalPosition": 356,
+              "body": "also Upload-Incomplete?",
+              "createdAt": "2021-10-21T00:56:29Z",
+              "updatedAt": "2021-10-21T00:56:40Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4uzAc4",
+          "commit": {
+            "abbreviatedOid": "7bd08b9"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-10-21T01:12:19Z",
+          "updatedAt": "2021-10-21T01:12:20Z",
+          "comments": [
+            {
+              "originalPosition": 149,
+              "body": "This is borrowed from the state tokens draft:\r\n\r\nhttps://mikewest.github.io/http-state-tokens/draft-west-http-state-tokens.html#rfc.section.3.1\r\n\r\nOriginal example just used UUID, but I'm aware of many embedded devices using the timestamp+MAC address method which is easily guessable.\r\n\r\nThe intention here is to standardize on something with good security properties, so less likely for implementations to mess up.",
+              "createdAt": "2021-10-21T01:12:20Z",
+              "updatedAt": "2021-10-21T01:12:20Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4uzAeZ",
+          "commit": {
+            "abbreviatedOid": "7bd08b9"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-10-21T01:12:34Z",
+          "updatedAt": "2021-10-21T01:12:34Z",
+          "comments": [
+            {
+              "originalPosition": 356,
+              "body": "Thanks! Fixed",
+              "createdAt": "2021-10-21T01:12:34Z",
+              "updatedAt": "2021-10-21T01:12:34Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4u5nof",
+          "commit": {
+            "abbreviatedOid": "7bd08b9"
+          },
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-10-22T13:36:11Z",
+          "updatedAt": "2021-10-22T13:36:11Z",
+          "comments": [
+            {
+              "originalPosition": 149,
+              "body": "If the intent is to standardize on HTTP State Token then I think that should be clear in the specification. It should also be clear that the at-least-256-bits of random data refers to a unique upload identifier, not to the full token, and either the method of securing and communicating that identifier can be proscriptive to require HTTP State Token or it could be left to the implementer to secure the identifier, either within the Upload-Token header or by some other means.",
+              "createdAt": "2021-10-22T13:36:11Z",
+              "updatedAt": "2021-10-22T13:36:11Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4vfExc",
+          "commit": {
+            "abbreviatedOid": "87307cc"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-11-03T14:57:12Z",
+          "updatedAt": "2021-11-03T14:59:50Z",
+          "comments": [
+            {
+              "originalPosition": 68,
+              "body": "I believe this entire sentence is not not necessary anymore and can be removed.",
+              "createdAt": "2021-11-03T14:57:12Z",
+              "updatedAt": "2021-11-03T14:59:50Z"
+            },
+            {
+              "originalPosition": 170,
+              "body": "I still don't think this 104 response is a good idea as support for this is currently non-existant. Do we know how existing proxies, clients and browsers would handle cases when they suddenly encounter a 104? Do they just ignore it or error out? That must be clarified before we include this section in the spec.",
+              "createdAt": "2021-11-03T14:59:39Z",
+              "updatedAt": "2021-11-03T14:59:50Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4vgCkc",
+          "commit": {
+            "abbreviatedOid": "87307cc"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-11-03T18:08:14Z",
+          "updatedAt": "2021-11-03T18:08:15Z",
+          "comments": [
+            {
+              "originalPosition": 170,
+              "body": "Clients and browsers will only receive 104 if their request includes `Upload-Token` header. This means they are aware of the resumable upload standard.\r\n\r\nProxy I'm not familiar with. It is possible that some of them drop 1xx responses instead of forwarding them, but that still allows the upload to proceed as a regular upload.\r\n\r\n104 feature detection is completely optional. You can disable it by sending `Upload-Offset: 0` during upload creation. I went through all the options, and I think this is an upgrade from SETTINGS where HTTP stack has to be modified. And it is also the only option that avoids an extra round trip.",
+              "createdAt": "2021-11-03T18:08:15Z",
+              "updatedAt": "2021-11-03T18:08:15Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "id": "PR_kwDOEkJfuM4uuEWM",
+      "title": "Simplify header handling",
+      "url": "https://github.com/tus/tus-v2/pull/6",
+      "state": "CLOSED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "This PR contains following changes, intended to simplify header validation and handling for the server and client:\r\n\r\n- Always require Upload-Offset in Upload Transfer Requests (instead of making it optional)\r\n- Include the Upload-Incomplete header in HEAD responses, to allow easy identification of an upload's status\r\n- Drop requirement that Upload-Incomplete header is always truthy if present.\r\n- Change response code for mismatching Upload-Offset from general 400 to specific 409.",
+      "createdAt": "2021-11-18T14:58:44Z",
+      "updatedAt": "2022-02-24T17:52:24Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "d6dbfe85361619e99107d05b277793749ff8665b",
+      "headRepository": "tus/tus-v2",
+      "headRefName": "simplify-header-handling",
+      "headRefOid": "4e19b81c802916a28e55312a9966d43120926eff",
+      "closedAt": "2022-01-06T13:20:54Z",
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Superseeded by #29.",
+          "createdAt": "2022-01-06T13:20:54Z",
+          "updatedAt": "2022-01-06T13:20:54Z"
+        }
+      ],
+      "reviews": []
+    },
+    {
+      "number": 7,
+      "id": "PR_kwDOEkJfuM4uugPq",
+      "title": "Review feedback",
+      "url": "https://github.com/tus/tus-v2/pull/7",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "* Parallel uploads\r\n* Upload-Token requirements (#5)",
+      "createdAt": "2021-11-18T17:02:35Z",
+      "updatedAt": "2021-12-15T21:13:47Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "1d86ae43b3976f2812ff8da79333e8a02b03aa19",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "review",
+      "headRefOid": "df651b617a8dae588f1b0a25b6b552962a41bd05",
+      "closedAt": "2021-12-02T14:56:15Z",
+      "mergedAt": "2021-12-02T14:56:15Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "380ad4859fbc971b657a09238280b5db1de5d8d5"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4waqEj",
+          "commit": {
+            "abbreviatedOid": "336f3e0"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-11-22T09:53:23Z",
+          "updatedAt": "2021-11-22T09:53:23Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "Does this mean globally or for the same upload-token? Is there a reason we want to prohibit multiple uploads of different files at the same time?",
+              "createdAt": "2021-11-22T09:53:23Z",
+              "updatedAt": "2021-11-22T09:53:23Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4warCr",
+          "commit": {
+            "abbreviatedOid": "336f3e0"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-11-22T09:56:38Z",
+          "updatedAt": "2021-11-22T09:56:38Z",
+          "comments": [
+            {
+              "originalPosition": 47,
+              "body": "Probably a copy/paste error. Shouldn't this be that the server MUST terminate any ongoing Upload Transfer Procedure before responding but MAY do so by abruptly terminating?",
+              "createdAt": "2021-11-22T09:56:38Z",
+              "updatedAt": "2021-11-22T09:56:38Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4warI-",
+          "commit": {
+            "abbreviatedOid": "336f3e0"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-11-22T09:56:58Z",
+          "updatedAt": "2021-11-22T09:56:58Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "Thanks, fixed",
+              "createdAt": "2021-11-22T09:56:58Z",
+              "updatedAt": "2021-11-22T09:56:58Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4wasbJ",
+          "commit": {
+            "abbreviatedOid": "828564c"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-11-22T10:01:26Z",
+          "updatedAt": "2021-11-22T10:01:26Z",
+          "comments": [
+            {
+              "originalPosition": 47,
+              "body": "Since this entire procedure is optional, I didn't think it's necessary to require the server to do this. It doesn't hurt that much if the server doesn't terminate ongoing transfers here. (Unlike the other places where allowing parallel transfers to continue may corrupt the upload.)",
+              "createdAt": "2021-11-22T10:01:26Z",
+              "updatedAt": "2021-11-22T10:01:38Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4webW1",
+          "commit": {
+            "abbreviatedOid": "828564c"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-11-23T07:10:04Z",
+          "updatedAt": "2021-11-23T07:10:04Z",
+          "comments": [
+            {
+              "originalPosition": 47,
+              "body": "That makes sense. Thanks for clarifying.",
+              "createdAt": "2021-11-23T07:10:04Z",
+              "updatedAt": "2021-11-23T07:10:04Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4w-KsF",
+          "commit": {
+            "abbreviatedOid": "828564c"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "Nice work, I like the formulations you chose!",
+          "createdAt": "2021-12-02T14:49:26Z",
+          "updatedAt": "2021-12-02T14:49:26Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "id": "PR_kwDOEkJfuM4uuj16",
+      "title": "fix build errors and warnings",
+      "url": "https://github.com/tus/tus-v2/pull/8",
+      "state": "MERGED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Most of these changes are to the Marksdown itself so that it integrates better with the kramdown for conversion to xmlrfc format. After applying these, they generate warnings like \"Warning: Too long line found (L136), 14 characters longer than 72 characters: \". That's not the end of the world but it is noise that masks other problems that might exist. So I took the liberty to adjust the sequence diagrams to fit the narrow space requirements.",
+      "createdAt": "2021-11-18T17:18:31Z",
+      "updatedAt": "2021-11-18T21:04:07Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "d6dbfe85361619e99107d05b277793749ff8665b",
+      "headRepository": "LPardue/tus-v2",
+      "headRefName": "fixup-build-errors-warnings",
+      "headRefOid": "ba3b1f5d8911e022ab239b9216850ef7cd2b425f",
+      "closedAt": "2021-11-18T21:04:07Z",
+      "mergedAt": "2021-11-18T21:04:07Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "ebe1b00114e9c4319c78883285838633c43e7e78"
+      },
+      "comments": [
+        {
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "An example of the rendered output in HTML (zipped because GitHub won't take .htm\r\n[draft-tus-resumable-uploads-protocol.zip](https://github.com/tus/tus-v2/files/7564748/draft-tus-resumable-uploads-protocol.zip)\r\nl)",
+          "createdAt": "2021-11-18T17:25:03Z",
+          "updatedAt": "2021-11-18T17:25:03Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4wS4-Z",
+          "commit": {
+            "abbreviatedOid": "ba3b1f5"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-11-18T17:46:02Z",
+          "updatedAt": "2021-11-18T17:46:02Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4wToY4",
+          "commit": {
+            "abbreviatedOid": "ba3b1f5"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "Thank you very much!",
+          "createdAt": "2021-11-18T21:04:00Z",
+          "updatedAt": "2021-11-18T21:04:00Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "id": "PR_kwDOEkJfuM4uvhMD",
+      "title": "Fix author section formatting, add Lucas",
+      "url": "https://github.com/tus/tus-v2/pull/9",
+      "state": "MERGED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "While making a change to add myself as an additional author. I noticed\nthat the authors section source was malformed, which resulted in\nonly the last listed author being rendered.\n\nThis change fixes the formatting to render all existing authors\ncorrectly, and adds me at the end.\n",
+      "createdAt": "2021-11-18T23:22:33Z",
+      "updatedAt": "2021-11-23T21:35:32Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "ebe1b00114e9c4319c78883285838633c43e7e78",
+      "headRepository": "LPardue/tus-v2",
+      "headRefName": "authors-fixup-and-add-lucas",
+      "headRefOid": "b73d26da974675e31d5e495016d8872e0d683fdb",
+      "closedAt": "2021-11-23T21:35:31Z",
+      "mergedAt": "2021-11-23T21:35:31Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "6ff86bfeeafcab8688171e2229ad2307f28dadd5"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4wUBig",
+          "commit": {
+            "abbreviatedOid": "b73d26d"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-11-18T23:23:26Z",
+          "updatedAt": "2021-11-18T23:23:26Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4wh6PH",
+          "commit": {
+            "abbreviatedOid": "b73d26d"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "Thank you very much!",
+          "createdAt": "2021-11-23T21:35:26Z",
+          "updatedAt": "2021-11-23T21:35:26Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "id": "PR_kwDOEkJfuM4uvqm9",
+      "title": "Update metadata to prepare for IETF solicitation",
+      "url": "https://github.com/tus/tus-v2/pull/10",
+      "state": "MERGED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Update the document metadata assuming that we wish to target the HTTP\nWG. \n\nThis change also moves the intended status from informational to\nstandards track. This reflects my understanding of the author group's\nintent with the protocol.\n",
+      "createdAt": "2021-11-19T00:21:51Z",
+      "updatedAt": "2021-11-26T17:32:56Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "ebe1b00114e9c4319c78883285838633c43e7e78",
+      "headRepository": "LPardue/tus-v2",
+      "headRefName": "prepare-metadata-for-httpbis",
+      "headRefOid": "08d057ac5b6ec89e63d5de08680ee4b16dbc6005",
+      "closedAt": "2021-11-26T17:32:56Z",
+      "mergedAt": "2021-11-26T17:32:56Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "c7a98af1cacbc345fc3b77b14e1ab0513438e4b2"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4wUb6z",
+          "commit": {
+            "abbreviatedOid": "08d057a"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-11-19T00:56:43Z",
+          "updatedAt": "2021-11-19T00:56:43Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4wsjAG",
+          "commit": {
+            "abbreviatedOid": "08d057a"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "Thanks, very good changes!",
+          "createdAt": "2021-11-26T17:32:52Z",
+          "updatedAt": "2021-11-26T17:32:52Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 14,
+      "id": "PR_kwDOEkJfuM4uv0ak",
+      "title": "Minor editorial pass for terms and references",
+      "url": "https://github.com/tus/tus-v2/pull/14",
+      "state": "MERGED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "I expect this to bitrot quickly, I'll take on the burden of resolving conflicts once more substantial PRs are merged ahead of this.\r\n\r\nWhere I've modified lines related to header fields, I've also \"s/header/header field\"\ufeff. I avoided doing so globally to reduce conflict potential.\r\n\r\nCool trick: internal cross references can use the header section names directly by substituting spaces with hyphens. Or you can create a manual anchor using `{#anchor-name}` if you want something more succinct.\r\n\r\n",
+      "createdAt": "2021-11-19T01:50:48Z",
+      "updatedAt": "2021-12-02T14:41:37Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "2dad1c5db6249c3046d947f7a27e1df473c46a42",
+      "headRepository": "LPardue/tus-v2",
+      "headRefName": "edits-refs-and-xrefs",
+      "headRefOid": "129a2461690c2257a6ab4341a9131adc7006ce3a",
+      "closedAt": "2021-12-02T14:41:37Z",
+      "mergedAt": "2021-12-02T14:41:37Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "1d86ae43b3976f2812ff8da79333e8a02b03aa19"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4wUjR9",
+          "commit": {
+            "abbreviatedOid": "249990e"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-11-19T02:01:53Z",
+          "updatedAt": "2021-11-19T02:01:53Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4w-Hxo",
+          "commit": {
+            "abbreviatedOid": "249990e"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "Wow, those are some useful utilities. Thank you very much!",
+          "createdAt": "2021-12-02T14:40:50Z",
+          "updatedAt": "2021-12-02T14:40:50Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 15,
+      "id": "PR_kwDOEkJfuM4uv0_b",
+      "title": "Flatten the doc so that procedures are top-level",
+      "url": "https://github.com/tus/tus-v2/pull/15",
+      "state": "MERGED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Purely editorial and subjective proposal. While reviewing, the bulk of the document was al under one section called \"Uploading Procedure\". Since the document is focused on uploads, the scope is clear. So this change makes the sequence diagram part the overview, and promotes all the procedures to their own top-level sections.",
+      "createdAt": "2021-11-19T01:57:25Z",
+      "updatedAt": "2021-12-02T14:39:23Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "ebe1b00114e9c4319c78883285838633c43e7e78",
+      "headRepository": "LPardue/tus-v2",
+      "headRefName": "flatten-structure",
+      "headRefOid": "ac8edefeb1965a8b523a6e01fd2cc89a962d10fd",
+      "closedAt": "2021-12-02T14:39:23Z",
+      "mergedAt": "2021-12-02T14:39:23Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "2dad1c5db6249c3046d947f7a27e1df473c46a42"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4wUjW-",
+          "commit": {
+            "abbreviatedOid": "ac8edef"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-11-19T02:02:44Z",
+          "updatedAt": "2021-11-19T02:02:44Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4w-HQF",
+          "commit": {
+            "abbreviatedOid": "ac8edef"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-12-02T14:39:16Z",
+          "updatedAt": "2021-12-02T14:39:16Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 17,
+      "id": "PR_kwDOEkJfuM4vSx6L",
+      "title": "Add info on server response if cancellation is not supported",
+      "url": "https://github.com/tus/tus-v2/pull/17",
+      "state": "MERGED",
+      "author": "smatsson",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2021-12-02T08:32:02Z",
+      "updatedAt": "2021-12-02T14:33:35Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "c7a98af1cacbc345fc3b77b14e1ab0513438e4b2",
+      "headRepository": "smatsson/tus-v2",
+      "headRefName": "master",
+      "headRefOid": "650d84eade491a895566ed0cf60476715af22db6",
+      "closedAt": "2021-12-02T14:33:35Z",
+      "mergedAt": "2021-12-02T14:33:35Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "795f5d723ddf7225d01382e62b162562f596bf7b"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4w-E9u",
+          "commit": {
+            "abbreviatedOid": "650d84e"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-12-02T14:32:43Z",
+          "updatedAt": "2021-12-02T14:32:43Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 18,
+      "id": "PR_kwDOEkJfuM4v6r81",
+      "title": "Relax termination requirements",
+      "url": "https://github.com/tus/tus-v2/pull/18",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "@justinruggles",
+      "createdAt": "2021-12-15T22:30:49Z",
+      "updatedAt": "2021-12-21T23:11:09Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "380ad4859fbc971b657a09238280b5db1de5d8d5",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "termination",
+      "headRefOid": "fd163691f5f6701eab5c91a519bcc154befb508b",
+      "closedAt": "2021-12-16T15:37:26Z",
+      "mergedAt": "2021-12-16T15:37:26Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "e900ea444406aed2ad69cc693f37c895770f6f62"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 19,
+      "id": "PR_kwDOEkJfuM4v9Pf_",
+      "title": "Stricter Upload-Token format",
+      "url": "https://github.com/tus/tus-v2/pull/19",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2021-12-16T15:38:07Z",
+      "updatedAt": "2021-12-21T23:11:02Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "e900ea444406aed2ad69cc693f37c895770f6f62",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "format",
+      "headRefOid": "0fcda0578397af1c7c9c2c024726b001a53f56da",
+      "closedAt": "2021-12-16T15:45:59Z",
+      "mergedAt": "2021-12-16T15:45:59Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "9d68819cc6cd8ba67f69b5c212dc6ca327ccdb10"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4xudII",
+          "commit": {
+            "abbreviatedOid": "0fcda05"
+          },
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-12-16T15:38:49Z",
+          "updatedAt": "2021-12-16T15:38:49Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 22,
+      "id": "PR_kwDOEkJfuM4v-s2X",
+      "title": "Update the diagrams to use POST instead of PATCH",
+      "url": "https://github.com/tus/tus-v2/pull/22",
+      "state": "MERGED",
+      "author": "justinruggles",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2021-12-17T01:36:40Z",
+      "updatedAt": "2022-01-06T11:31:37Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "9d68819cc6cd8ba67f69b5c212dc6ca327ccdb10",
+      "headRepository": "justinruggles/tus-v2",
+      "headRefName": "patch-1",
+      "headRefOid": "1e45251957b2ef358f0cec625c12a1426acbe525",
+      "closedAt": "2022-01-06T11:31:37Z",
+      "mergedAt": "2022-01-06T11:31:37Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "3b5c5940e9f17ad8cfbb4ad511f2cc779f6d9f76"
+      },
+      "comments": [
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I didn\u2019t update this before since using POST is optional. I\u2019m OK either way",
+          "createdAt": "2021-12-17T01:51:53Z",
+          "updatedAt": "2021-12-17T01:51:53Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4yZeGx",
+          "commit": {
+            "abbreviatedOid": "1e45251"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "The documentation mentions that\r\n\r\n> The client is RECOMMENDED to use POST request if not otherwise specified.\r\n\r\nSo I believe it's best that the examples reflect this recommendation.",
+          "createdAt": "2022-01-06T11:31:30Z",
+          "updatedAt": "2022-01-06T11:31:30Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 23,
+      "id": "PR_kwDOEkJfuM4wH3gY",
+      "title": "Update info on metadata",
+      "url": "https://github.com/tus/tus-v2/pull/23",
+      "state": "CLOSED",
+      "author": "smatsson",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2021-12-21T09:53:34Z",
+      "updatedAt": "2022-01-19T21:32:01Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "9d68819cc6cd8ba67f69b5c212dc6ca327ccdb10",
+      "headRepository": "smatsson/tus-v2",
+      "headRefName": "master",
+      "headRefOid": "7a9a23d400824647342d2de199fb6a9749b775a8",
+      "closedAt": "2022-01-19T21:32:01Z",
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I would add something like `The server MAY ignore the upload metadata sent on requests for resuming an existing upload.`",
+          "createdAt": "2021-12-21T23:06:05Z",
+          "updatedAt": "2021-12-21T23:06:05Z"
+        },
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Superseeded by https://github.com/tus/tus-v2/pull/35",
+          "createdAt": "2022-01-19T21:32:01Z",
+          "updatedAt": "2022-01-19T21:32:01Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4x8fIq",
+          "commit": {
+            "abbreviatedOid": "7a9a23d"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-12-21T23:06:21Z",
+          "updatedAt": "2021-12-21T23:06:21Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 25,
+      "id": "PR_kwDOEkJfuM4wKHJ2",
+      "title": "Stop mentioning \"file\"",
+      "url": "https://github.com/tus/tus-v2/pull/25",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Resolves #20 ",
+      "createdAt": "2021-12-21T23:37:36Z",
+      "updatedAt": "2022-01-06T23:01:36Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "9d68819cc6cd8ba67f69b5c212dc6ca327ccdb10",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "file",
+      "headRefOid": "1fbc1f0741499455a99c70aebd310195214cd192",
+      "closedAt": "2022-01-06T11:24:06Z",
+      "mergedAt": "2022-01-06T11:24:06Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "7a809ee68d1a12cece9585c4ac9d09ad92e2957b"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4x8nhR",
+          "commit": {
+            "abbreviatedOid": "1fbc1f0"
+          },
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-12-22T00:25:04Z",
+          "updatedAt": "2021-12-22T00:25:04Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4yZcyI",
+          "commit": {
+            "abbreviatedOid": "1fbc1f0"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-06T11:24:00Z",
+          "updatedAt": "2022-01-06T11:24:00Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 26,
+      "id": "PR_kwDOEkJfuM4wKL3Y",
+      "title": "Rephrase \"resources allocated for\" and \"record of\"",
+      "url": "https://github.com/tus/tus-v2/pull/26",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Resolves #21",
+      "createdAt": "2021-12-22T00:21:10Z",
+      "updatedAt": "2022-01-06T23:01:44Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "9d68819cc6cd8ba67f69b5c212dc6ca327ccdb10",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "active",
+      "headRefOid": "ad7d929be9c2cd84ef94ad09f1acce4d28418e5f",
+      "closedAt": "2022-01-06T11:34:37Z",
+      "mergedAt": "2022-01-06T11:34:37Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "5e4f36c24f6d05277ae229723b288315d554f220"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4x8nnM",
+          "commit": {
+            "abbreviatedOid": "ad7d929"
+          },
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-12-22T00:26:11Z",
+          "updatedAt": "2021-12-22T00:26:11Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4yZenk",
+          "commit": {
+            "abbreviatedOid": "ad7d929"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-06T11:34:31Z",
+          "updatedAt": "2022-01-06T11:34:31Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 27,
+      "id": "PR_kwDOEkJfuM4wm31P",
+      "title": "Add more detail to Overview section",
+      "url": "https://github.com/tus/tus-v2/pull/27",
+      "state": "MERGED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "This PR adds minor details, making this section for understandable and easier to follow for newcomers",
+      "createdAt": "2022-01-06T12:47:36Z",
+      "updatedAt": "2022-01-16T19:56:11Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "5e4f36c24f6d05277ae229723b288315d554f220",
+      "headRepository": "tus/tus-v2",
+      "headRefName": "Acconut-patch-1",
+      "headRefOid": "3a7e8713fbc6c9a124f97840fd8a77f4ade51657",
+      "closedAt": "2022-01-16T19:56:08Z",
+      "mergedAt": "2022-01-16T19:56:08Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "338e0e25488dbb85a6abd0f647577a217325e369"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4yaYZz",
+          "commit": {
+            "abbreviatedOid": "3a7e871"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-06T15:57:34Z",
+          "updatedAt": "2022-01-06T15:57:34Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4ydIRH",
+          "commit": {
+            "abbreviatedOid": "3a7e871"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-07T10:46:10Z",
+          "updatedAt": "2022-01-07T10:46:10Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 28,
+      "id": "PR_kwDOEkJfuM4wm7M7",
+      "title": "Add more details to Procedure sections",
+      "url": "https://github.com/tus/tus-v2/pull/28",
+      "state": "MERGED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "This PR adds some more details, rewords phrases and changed to order of some paragraphs. No meaning should be changed, but I believe this makes it more understandable.",
+      "createdAt": "2022-01-06T13:08:27Z",
+      "updatedAt": "2022-01-16T20:00:24Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "5e4f36c24f6d05277ae229723b288315d554f220",
+      "headRepository": "tus/tus-v2",
+      "headRefName": "Acconut-patch-2",
+      "headRefOid": "841e3c02865bab990f771a49b69b3081256deb60",
+      "closedAt": "2022-01-16T20:00:19Z",
+      "mergedAt": "2022-01-16T20:00:19Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "c00d384839aec29e55b1b8d644d4b8adce620ee0"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4yaYNA",
+          "commit": {
+            "abbreviatedOid": "e6b38eb"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-06T15:56:50Z",
+          "updatedAt": "2022-01-06T15:56:50Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4ydIg-",
+          "commit": {
+            "abbreviatedOid": "e6b38eb"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-07T10:47:35Z",
+          "updatedAt": "2022-01-07T10:49:33Z",
+          "comments": [
+            {
+              "originalPosition": 9,
+              "body": "Minor: \"And\" is probably not needed here? `And all response status codes` -> `All response status codes`",
+              "createdAt": "2022-01-07T10:47:36Z",
+              "updatedAt": "2022-01-07T10:49:33Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 29,
+      "id": "PR_kwDOEkJfuM4wm9OV",
+      "title": "Simplify header handling (attempt #2)",
+      "url": "https://github.com/tus/tus-v2/pull/29",
+      "state": "MERGED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "This PR superseeds https://github.com/tus/tus-v2/pull/6.\r\n\r\nThe included changes are:\r\n- Include the Upload-Incomplete header in HEAD responses, to allow easy identification of an upload's status.\r\n- Clarify when an upload is complete and when not.\r\n- Drop requirement that Upload-Incomplete header is always truthy if present.\r\n- Change response code for mismatching Upload-Offset from general 400 to specific 409.\r\n- Add brief description what each header value represents.",
+      "createdAt": "2022-01-06T13:20:38Z",
+      "updatedAt": "2022-01-16T20:36:40Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "c00d384839aec29e55b1b8d644d4b8adce620ee0",
+      "headRepository": "tus/tus-v2",
+      "headRefName": "Acconut-patch-3",
+      "headRefOid": "df4c118941982a97262c7e51a662119919faa65f",
+      "closedAt": "2022-01-16T20:36:37Z",
+      "mergedAt": "2022-01-16T20:36:36Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "35166f3c5fe79970f3b398afccae3bc884c0d4ea"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4yaIYJ",
+          "commit": {
+            "abbreviatedOid": "4acf532"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-06T14:57:11Z",
+          "updatedAt": "2022-01-06T14:57:12Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": ">If the server considers the upload associated with this token active, \r\n\r\nShould probably still be there from #26 ",
+              "createdAt": "2022-01-06T14:57:11Z",
+              "updatedAt": "2022-01-06T14:57:12Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4yaJyo",
+          "commit": {
+            "abbreviatedOid": "4acf532"
+          },
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-06T15:02:33Z",
+          "updatedAt": "2022-01-06T15:02:33Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": "\"falsy\" is a bit vague",
+              "createdAt": "2022-01-06T15:02:33Z",
+              "updatedAt": "2022-01-06T15:02:33Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4yaXup",
+          "commit": {
+            "abbreviatedOid": "4acf532"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-06T15:55:05Z",
+          "updatedAt": "2022-01-06T15:55:05Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": "Add brief explanation that the server may deactivate the token immediately after the transfer completes, so it won't ever respond with `Upload-Incomplete: ?0`. We are not forcing servers to keep the completed upload around.",
+              "createdAt": "2022-01-06T15:55:05Z",
+              "updatedAt": "2022-01-06T15:55:05Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4y4xSo",
+          "commit": {
+            "abbreviatedOid": "df4c118"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-16T20:36:32Z",
+          "updatedAt": "2022-01-16T20:36:32Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": "Thank you all for the feedback!",
+              "createdAt": "2022-01-16T20:36:32Z",
+              "updatedAt": "2022-01-16T20:36:33Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 30,
+      "id": "PR_kwDOEkJfuM4wnDV5",
+      "title": "Add appendix explaining background of informational response",
+      "url": "https://github.com/tus/tus-v2/pull/30",
+      "state": "MERGED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2022-01-06T13:57:28Z",
+      "updatedAt": "2022-01-16T19:47:21Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "3d1c8afcfebf8c402ac670a7d01b6d5af38c07fc",
+      "headRepository": "tus/tus-v2",
+      "headRefName": "Acconut-patch-4",
+      "headRefOid": "a483439afd394ab3a9156832846d585d506d7431",
+      "closedAt": "2022-01-16T19:47:17Z",
+      "mergedAt": "2022-01-16T19:47:17Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "8344f9eb8932fac8136d58f268e93e3bcfa07d59"
+      },
+      "comments": [
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "```\r\n/github/workspace/draft-tus-resumable-uploads-protocol.xml(441): Error: Did not expect a numbered section after an unnumbered section (seen on line 437)\r\n20\r\n```",
+          "createdAt": "2022-01-06T15:23:26Z",
+          "updatedAt": "2022-01-06T15:23:26Z"
+        },
+        {
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Only approved the changes. Checks needs to be fixed ;) ",
+          "createdAt": "2022-01-07T10:50:20Z",
+          "updatedAt": "2022-01-07T10:50:20Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4yaO87",
+          "commit": {
+            "abbreviatedOid": "35f10c8"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-06T15:21:55Z",
+          "updatedAt": "2022-01-06T15:21:55Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4ydI6r",
+          "commit": {
+            "abbreviatedOid": "35f10c8"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-07T10:49:58Z",
+          "updatedAt": "2022-01-07T10:49:58Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 31,
+      "id": "PR_kwDOEkJfuM4wnFzb",
+      "title": "Add appendix explaining background of feature detection",
+      "url": "https://github.com/tus/tus-v2/pull/31",
+      "state": "MERGED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2022-01-06T14:11:12Z",
+      "updatedAt": "2022-01-16T19:55:37Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "8344f9eb8932fac8136d58f268e93e3bcfa07d59",
+      "headRepository": "tus/tus-v2",
+      "headRefName": "Acconut-patch-5",
+      "headRefOid": "37a077774a2e46433d28bb65eb34241243a28aa1",
+      "closedAt": "2022-01-16T19:55:33Z",
+      "mergedAt": "2022-01-16T19:55:33Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "8e3f8b505293be5b6a08299e25c2520fd70a6230"
+      },
+      "comments": [
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Thank you for the review, @smatsson!",
+          "createdAt": "2022-01-16T19:52:55Z",
+          "updatedAt": "2022-01-16T19:52:55Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4yaQUo",
+          "commit": {
+            "abbreviatedOid": "c54e61a"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-06T15:26:58Z",
+          "updatedAt": "2022-01-06T15:26:58Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4ydJIp",
+          "commit": {
+            "abbreviatedOid": "c54e61a"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "Minor issues, otherwise good! \ud83d\udc4d",
+          "createdAt": "2022-01-07T10:51:11Z",
+          "updatedAt": "2022-01-07T10:52:53Z",
+          "comments": [
+            {
+              "originalPosition": 11,
+              "body": "Missing word. \"there might not *be* one approach which fits a...\"",
+              "createdAt": "2022-01-07T10:51:12Z",
+              "updatedAt": "2022-01-07T10:52:53Z"
+            },
+            {
+              "originalPosition": 15,
+              "body": "\"... leak information *to* other third-parties\"? ",
+              "createdAt": "2022-01-07T10:51:56Z",
+              "updatedAt": "2022-01-07T10:52:53Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 32,
+      "id": "PR_kwDOEkJfuM4woi_a",
+      "title": "Draft Version Identification",
+      "url": "https://github.com/tus/tus-v2/pull/32",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Borrowed from the HTTP/3 draft\r\n\r\nhttps://github.com/quicwg/base-drafts/commit/c1a0d9934cdcab2ed147e6b9d8a4f20337d3e70f#diff-c7364e57fd3b825f8342d91eabf4fa844f1c26127970ccb1af9a1a16a6598165",
+      "createdAt": "2022-01-06T23:34:41Z",
+      "updatedAt": "2022-01-20T15:05:34Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "3d1c8afcfebf8c402ac670a7d01b6d5af38c07fc",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "version",
+      "headRefOid": "b0a4a10c53b3116adbdbf554c3f3102a0439b33c",
+      "closedAt": "2022-01-19T20:26:41Z",
+      "mergedAt": "2022-01-19T20:26:40Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "25ef569afd7e433b85191163cbef1d3476790aee"
+      },
+      "comments": [
+        {
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Does this only apply to the 104 and not the other responses? I can see the benefit of adding it to all responses if there are breaking changes between two draft versions.",
+          "createdAt": "2022-01-07T10:54:20Z",
+          "updatedAt": "2022-01-07T10:54:20Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I think it's more important for feature detection to signal the version since it can fallback to a regular non-resumable upload.\r\n\r\nFor explicit uses of the resumable upload protocol, finding out version mismatch is too late because it can only lead to failure. Experimental deployments should use different URLs for different draft versions to ensure compatibility. E.g. `https://example.com/draft-v1/upload`",
+          "createdAt": "2022-01-07T21:22:12Z",
+          "updatedAt": "2022-01-07T21:22:12Z"
+        },
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Interesting proposal. I had thought about a draft version identification as being sent from the client to the server, so the server knows using which version the request should be handled.\r\n\r\nIn your PR, the identifier is intended, so the client can error out if the server implements a wrong draft version. Is this correct?",
+          "createdAt": "2022-01-16T21:07:26Z",
+          "updatedAt": "2022-01-16T21:07:26Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I suppose that a request header works too. This is specific to feature detection so incompatible versions ignore each other\u2019s feature detection message",
+          "createdAt": "2022-01-16T21:20:36Z",
+          "updatedAt": "2022-01-16T21:20:36Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Oh I think a request header is better, since the final version won\u2019t need to worry about this header any more. I\u2019ll update the PR",
+          "createdAt": "2022-01-16T21:26:14Z",
+          "updatedAt": "2022-01-16T21:26:14Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Updated to have `Upload-Draft-Version` in both request and 104 response. (It's the only way RFC client and server implementations without this logic can inter-op with draft implementations)",
+          "createdAt": "2022-01-17T09:24:44Z",
+          "updatedAt": "2022-01-17T09:24:44Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4yfhVg",
+          "commit": {
+            "abbreviatedOid": "a077f7f"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-08T05:47:24Z",
+          "updatedAt": "2022-01-08T05:47:24Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zGYDg",
+          "commit": {
+            "abbreviatedOid": "b0a4a10"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "Sounds great! Thanks for the update!",
+          "createdAt": "2022-01-19T20:26:36Z",
+          "updatedAt": "2022-01-19T20:26:36Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 33,
+      "id": "PR_kwDOEkJfuM4xHWzf",
+      "title": "Include Upload-Offset for incomplete upload transfers",
+      "url": "https://github.com/tus/tus-v2/pull/33",
+      "state": "MERGED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2022-01-16T20:53:08Z",
+      "updatedAt": "2022-02-24T17:52:23Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "25ef569afd7e433b85191163cbef1d3476790aee",
+      "headRepository": "tus/tus-v2",
+      "headRefName": "Acconut-patch-1",
+      "headRefOid": "b71acbce9e2c99bdaf0f14824f7aa3b6c77b9e26",
+      "closedAt": "2022-01-19T20:27:58Z",
+      "mergedAt": "2022-01-19T20:27:58Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "ea41db93ff984259c2f4b3a19e698842dd0722f4"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4y41WM",
+          "commit": {
+            "abbreviatedOid": "a5739d1"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-16T21:01:16Z",
+          "updatedAt": "2022-01-16T21:01:16Z",
+          "comments": [
+            {
+              "originalPosition": 13,
+              "body": "Let's just add a random `content-length` to the request and matching value here",
+              "createdAt": "2022-01-16T21:01:16Z",
+              "updatedAt": "2022-01-16T21:01:16Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4y410L",
+          "commit": {
+            "abbreviatedOid": "a5739d1"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-16T21:05:04Z",
+          "updatedAt": "2022-01-16T21:05:05Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "What do you think about lowering this to a SHOULD or MAY? Since the lack of this header does not affect the upload.",
+              "createdAt": "2022-01-16T21:05:05Z",
+              "updatedAt": "2022-01-16T21:05:05Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4y42cT",
+          "commit": {
+            "abbreviatedOid": "a5739d1"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-16T21:10:43Z",
+          "updatedAt": "2022-01-16T21:10:43Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "I prefer it if the spec leaves less room for such optional behavior. Especially in this case, since the server should have no problems complying with this requirement.",
+              "createdAt": "2022-01-16T21:10:43Z",
+              "updatedAt": "2022-01-16T21:10:43Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4y42ju",
+          "commit": {
+            "abbreviatedOid": "a5739d1"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-16T21:11:39Z",
+          "updatedAt": "2022-01-16T21:11:40Z",
+          "comments": [
+            {
+              "originalPosition": 13,
+              "body": "Good idea, done!",
+              "createdAt": "2022-01-16T21:11:39Z",
+              "updatedAt": "2022-01-16T21:11:40Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4y55L2",
+          "commit": {
+            "abbreviatedOid": "43b76bd"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-17T08:52:41Z",
+          "updatedAt": "2022-01-17T08:52:41Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "That makes sense. If it helps with debugging, do you think this requirement should be moved to all Upload Transfer Procedure responses, rather than just the incomplete ones?",
+              "createdAt": "2022-01-17T08:52:41Z",
+              "updatedAt": "2022-01-17T08:52:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4y55Rp",
+          "commit": {
+            "abbreviatedOid": "43b76bd"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-17T08:52:51Z",
+          "updatedAt": "2022-01-17T08:52:51Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4y-VsL",
+          "commit": {
+            "abbreviatedOid": "43b76bd"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-18T10:12:44Z",
+          "updatedAt": "2022-01-18T10:12:44Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 34,
+      "id": "PR_kwDOEkJfuM4xSXBV",
+      "title": "Mention 103 Early Hints and multipart requests",
+      "url": "https://github.com/tus/tus-v2/pull/34",
+      "state": "MERGED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2022-01-19T20:56:46Z",
+      "updatedAt": "2022-02-24T17:52:22Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "ea41db93ff984259c2f4b3a19e698842dd0722f4",
+      "headRepository": "tus/tus-v2",
+      "headRefName": "Acconut-patch-2",
+      "headRefOid": "4b40793be7ec6b072a9774077205935f094093fd",
+      "closedAt": "2022-01-19T21:05:19Z",
+      "mergedAt": "2022-01-19T21:05:19Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "38bba827a9c7ba4577531a819196591765c0b25c"
+      },
+      "comments": [
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Thanks for the quick review :D",
+          "createdAt": "2022-01-19T21:05:15Z",
+          "updatedAt": "2022-01-19T21:05:15Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4zGg04",
+          "commit": {
+            "abbreviatedOid": "4b40793"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-19T21:04:29Z",
+          "updatedAt": "2022-01-19T21:04:29Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zGhjJ",
+          "commit": {
+            "abbreviatedOid": "7ccd902"
+          },
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-19T21:06:33Z",
+          "updatedAt": "2022-01-19T21:06:33Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "The 103 spec says \r\n\r\n>    The 103 (Early Hints) informational status code indicates to the\r\n   client that the server is likely to send a final response with the\r\n   header fields included in the informational response.\r\n\r\nSo in theory, this is an early hint about the fields that would appear in the final response. In theory it should work for any type of header field. In theory, the nice thing with early hints is that if an intermediary drops the 103 (which is allowed) then the client still expects that the 200 response is the final answer about if the hint was true or not. 104 doesn't seem to accommodate that (yet) and probably needs some more thought.\r\n\r\nIn practice, I agree with this statement that is is unclear if 103 implementations really support the spirit of the spec, or anything beyond Link headers",
+              "createdAt": "2022-01-19T21:06:33Z",
+              "updatedAt": "2022-01-19T21:06:33Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zGpQb",
+          "commit": {
+            "abbreviatedOid": "4b40793"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-19T21:26:39Z",
+          "updatedAt": "2022-01-19T21:26:40Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "Makes sense. It's too late to do feature detection at the point where the response is received, and we are basically using the presence of 104 to signal support, so it might not be the best fit",
+              "createdAt": "2022-01-19T21:26:39Z",
+              "updatedAt": "2022-01-19T21:26:40Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zGpY8",
+          "commit": {
+            "abbreviatedOid": "4b40793"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-19T21:27:17Z",
+          "updatedAt": "2022-01-19T21:27:17Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "Good insights, thank you! Once we are more certain whether to go with 103, 104 or none of these, we can expand the details.",
+              "createdAt": "2022-01-19T21:27:17Z",
+              "updatedAt": "2022-01-19T21:27:17Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 35,
+      "id": "PR_kwDOEkJfuM4xScX3",
+      "title": "Clear up Content-Type and Content-Disposition header",
+      "url": "https://github.com/tus/tus-v2/pull/35",
+      "state": "MERGED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "This piece is left rather vague as we could not come to an agreement yet. I believe it is best to wait for feedback from the HTTP Working Group or other folks.",
+      "createdAt": "2022-01-19T21:27:37Z",
+      "updatedAt": "2022-02-24T14:51:13Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "38bba827a9c7ba4577531a819196591765c0b25c",
+      "headRepository": "tus/tus-v2",
+      "headRefName": "Acconut-patch-3",
+      "headRefOid": "7606e3b2c4bebf02eb8aeeb4b8f59c82926b5de9",
+      "closedAt": "2022-02-24T14:51:08Z",
+      "mergedAt": "2022-02-24T14:51:08Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "b43fcfb81a4eb6c10a619c505960f55bb1815ed5"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4zGrqY",
+          "commit": {
+            "abbreviatedOid": "b8d35bf"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-19T21:37:56Z",
+          "updatedAt": "2022-01-19T21:37:56Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zK0P3",
+          "commit": {
+            "abbreviatedOid": "b8d35bf"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-20T16:08:56Z",
+          "updatedAt": "2022-01-20T16:08:56Z",
+          "comments": [
+            {
+              "originalPosition": 15,
+              "body": "As discussed in the meeting, MUST is too strict. Client might not know which headers are metadata",
+              "createdAt": "2022-01-20T16:08:56Z",
+              "updatedAt": "2022-01-20T16:08:56Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zLfHP",
+          "commit": {
+            "abbreviatedOid": "b8d35bf"
+          },
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-20T18:25:44Z",
+          "updatedAt": "2022-01-20T18:25:44Z",
+          "comments": [
+            {
+              "originalPosition": 15,
+              "body": "I suggest modifying this paragraph a bit to something like below. The suggestion is based on my understanding so might be incorrect but the structure is the important part. HTTP supports representation meadata so we don't need to say `MAY` on requests - we are not redefining the rules of HTTP AFAICT.\r\n\r\nGuoye's comment should be accommodated but I kept it in my suggestion for clarity.\r\n\r\n\r\n> File metadata can affect how servers might act on the uploaded file. Clients can send Representation Metadata (see {{Section 8.3 of HTTP}}) in the Upload Transfer Procedure request that starts an upload.  Servers MAY interpret this metadata or MAY ignore it. Clients MUST NOT send representation metadata in subsequent Upload Transfer Procedure requests; servers MUST ignore representation received in subsequent requests. Where a client includes `Content-Disposition` the parameters MUST be either `filename`, `filename*` or `boundary`.",
+              "createdAt": "2022-01-20T18:25:44Z",
+              "updatedAt": "2022-01-20T18:25:44Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM41MysB",
+          "commit": {
+            "abbreviatedOid": "b8d35bf"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-02-24T14:49:58Z",
+          "updatedAt": "2022-02-24T14:49:58Z",
+          "comments": [
+            {
+              "originalPosition": 15,
+              "body": "Thank you for your feedback! Included it in the PR.",
+              "createdAt": "2022-02-24T14:49:58Z",
+              "updatedAt": "2022-02-24T14:49:58Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 36,
+      "id": "PR_kwDOEkJfuM4xVWw9",
+      "title": "Draft interop version",
+      "url": "https://github.com/tus/tus-v2/pull/36",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2022-01-20T15:58:11Z",
+      "updatedAt": "2022-02-03T15:06:15Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "38bba827a9c7ba4577531a819196591765c0b25c",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "version",
+      "headRefOid": "441f4230d3ab21bcc68aac0988da57fe6d0dddbb",
+      "closedAt": "2022-02-03T14:59:07Z",
+      "mergedAt": "2022-02-03T14:59:07Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "26995fd663a5c9d688bcc78c98a09e8385a96020"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4zK0ug",
+          "commit": {
+            "abbreviatedOid": "441f423"
+          },
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "LGTM thansk",
+          "createdAt": "2022-01-20T16:10:23Z",
+          "updatedAt": "2022-01-20T16:10:23Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4z-R-n",
+          "commit": {
+            "abbreviatedOid": "441f423"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-02-03T14:59:02Z",
+          "updatedAt": "2022-02-03T14:59:02Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 37,
+      "id": "PR_kwDOEkJfuM4xblOI",
+      "title": "Add Upload-Offset to more transfer procedure calls",
+      "url": "https://github.com/tus/tus-v2/pull/37",
+      "state": "CLOSED",
+      "author": "smatsson",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "As discussed in the latest meeting. Hopefully I got all the details correct. Would love to hear your feedback on this @justinruggles as you had some valid points in the meeting.\r\n\r\nAlso I would like to comment on this section:\r\n\r\n>The Server MAY include the `Upload-Offset` header for other status codes than described in this document if and only if it can guarantee that the offset is correct.\r\n\r\nMy idea here stems from tusdotnet where the server can reject a request based on e.g. missing/incorrect metadata and it would thus include the `Upload-Offset` to relieve the client from doing an extra offset retrieving request. It's intentionally written a bit vague to let the server implementation chose when to include it and when not to in regards to error responses.",
+      "createdAt": "2022-01-22T08:49:26Z",
+      "updatedAt": "2022-01-28T07:02:43Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "38bba827a9c7ba4577531a819196591765c0b25c",
+      "headRepository": "smatsson/tus-v2",
+      "headRefName": "master",
+      "headRefOid": "15774f47979f7b4eff011d617fd5b88730b82b70",
+      "closedAt": "2022-01-28T07:02:43Z",
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "After discussions I'm closing this PR. Adding Upload-Offset to more transfer procedure responses gives us the advantage of not requiring an extra round trip to the server if something goes wrong but also gives us more complexity and loads and loads of exceptions to the rule. Because of this we opted to go the easier road and just always perform an Offset Retrieving Procedure.",
+          "createdAt": "2022-01-28T07:02:43Z",
+          "updatedAt": "2022-01-28T07:02:43Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4zRWgf",
+          "commit": {
+            "abbreviatedOid": "15774f4"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-22T09:00:08Z",
+          "updatedAt": "2022-01-22T09:00:09Z",
+          "comments": [
+            {
+              "originalPosition": 17,
+              "body": "> If the offset in the `Upload-Offset` header field does not match the value 0, the offset provided by the immediate previous Offset Retrieving Procedure ({{offset-retrieving}}), or the end offset of the immediate previous incomplete transfer, the server MUST respond with `409 (Conflict)` status code\r\n\r\nI think this is slightly in conflict with the statement above. Client should know the offset already, so it should never rely on the `Upload-Offset` in Upload Transfer Procedure responses. The client MAY check if the `Upload-Offset` in the response matches expectations.",
+              "createdAt": "2022-01-22T09:00:09Z",
+              "updatedAt": "2022-01-22T09:00:09Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zRXrN",
+          "commit": {
+            "abbreviatedOid": "15774f4"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-22T10:05:59Z",
+          "updatedAt": "2022-01-22T10:06:00Z",
+          "comments": [
+            {
+              "originalPosition": 17,
+              "body": "I don't think I really follow, could you give more details on how it's in conflict? The added section describes what should happen if the `Upload-Offset` is not present _at all_ (e.g. a proxy stripped it) and was added to prevent the client from assuming that that a missing header is the same as zero. For anything but the 404 response, this means that the client must perform an offset retrieving procedure to get the correct offset. For a 404 there is obviously no need as the upload does not exist.\r\n\r\nThe client may check if the `Upload-Offset` matches what it expects and if not it may abort the upload or perform a new offset retrieving procedure to get the real offset and continue the upload from there. If the `Upload-Offset` does match then there is no issue. \r\n\r\n> or the end offset of the immediate previous incomplete transfer,\r\n\r\n~~This should be updated to remove the word \"incomplete\" as this is no longer the case.~~ EDIT: This is incorrect, my bad.",
+              "createdAt": "2022-01-22T10:05:59Z",
+              "updatedAt": "2022-01-22T10:26:26Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zRYzw",
+          "commit": {
+            "abbreviatedOid": "15774f4"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-22T11:11:49Z",
+          "updatedAt": "2022-01-22T11:11:50Z",
+          "comments": [
+            {
+              "originalPosition": 17,
+              "body": "> If the response does not contain the `Upload-Offset` header, and the status code is not `404 (Not Found)`, the Client MUST perform the Offset Retrieving Procedure ({{offset-retrieving}}) to retrieve the expected offset before continuing the upload.\r\n\r\nThis sentence implies that if the response contains `Upload-Offset`, client can use it to continue the upload. I think this is backwards. Client should always know the expected `Upload-Offset` here already, and there is something seriously broken if client doesn't. The sentence quoted in my previous comment does not allow the offset in this response to be used.",
+              "createdAt": "2022-01-22T11:11:49Z",
+              "updatedAt": "2022-01-22T11:11:50Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 38,
+      "id": "PR_kwDOEkJfuM4xwP21",
+      "title": "Try to make it clearer what an upload is",
+      "url": "https://github.com/tus/tus-v2/pull/38",
+      "state": "MERGED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The main intent of this PR is to make it clearer what an upload is, based on my perspective of the spec\r\n\r\nThis ended up a little larger than I first planned, sorry. It might also be opposed to what others think the useful definition of upload is.\r\n\r\nI tried to use HTTP terms like representation where I could. This should make it easier to contrast with Range requests that support resumable downloads.\r\n\r\nI might not have gone far enough in applying the terminology everywhere. But I wanted to get some review before investing more time on a dead end.\r\n\r\nPS. I'd missed that there were actually two examples of different uploads in the overview section. I think this is important not to miss, so I promoted them to their own sections with an up-front description of what the example is attempting to demonstrate.",
+      "createdAt": "2022-01-28T18:56:29Z",
+      "updatedAt": "2022-02-03T14:57:03Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "38bba827a9c7ba4577531a819196591765c0b25c",
+      "headRepository": "LPardue/tus-v2",
+      "headRefName": "lucas/editorial-terminology-clarification",
+      "headRefOid": "93905d7abd9b63ddc2153b0d56aa285eddae546b",
+      "closedAt": "2022-02-03T14:57:02Z",
+      "mergedAt": "2022-02-03T14:57:02Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "5545307906faf26503816952718cc8bc4c065082"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4zpwMv",
+          "commit": {
+            "abbreviatedOid": "7126d6d"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-28T19:20:01Z",
+          "updatedAt": "2022-01-28T19:20:01Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zpzVz",
+          "commit": {
+            "abbreviatedOid": "7126d6d"
+          },
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-28T19:33:19Z",
+          "updatedAt": "2022-01-28T19:33:19Z",
+          "comments": [
+            {
+              "originalPosition": 22,
+              "body": "typo: \"tt is desirable\"",
+              "createdAt": "2022-01-28T19:33:19Z",
+              "updatedAt": "2022-01-28T19:33:19Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zp51B",
+          "commit": {
+            "abbreviatedOid": "7126d6d"
+          },
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-01-28T19:39:42Z",
+          "updatedAt": "2022-01-28T19:39:42Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4ztmO6",
+          "commit": {
+            "abbreviatedOid": "bd5bc58"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-01-31T09:37:20Z",
+          "updatedAt": "2022-01-31T09:43:48Z",
+          "comments": [
+            {
+              "originalPosition": 19,
+              "body": "Missing space before \"may\": `3.2 of HTTP}})may`",
+              "createdAt": "2022-01-31T09:37:20Z",
+              "updatedAt": "2022-01-31T09:43:48Z"
+            },
+            {
+              "originalPosition": 22,
+              "body": "\"manual actions such **as** pausing an upload.\"",
+              "createdAt": "2022-01-31T09:38:10Z",
+              "updatedAt": "2022-01-31T09:43:48Z"
+            },
+            {
+              "originalPosition": 55,
+              "body": "I don't get this sentence.  The final experience is an interruption? Or it finally experiences an interruption?",
+              "createdAt": "2022-01-31T09:41:11Z",
+              "updatedAt": "2022-01-31T09:43:48Z"
+            },
+            {
+              "originalPosition": 66,
+              "body": "Extra \"is\"? \"a file is contains data\"",
+              "createdAt": "2022-01-31T09:42:33Z",
+              "updatedAt": "2022-01-31T09:43:48Z"
+            },
+            {
+              "originalPosition": 66,
+              "body": "Side note: Not really sure that this part of the procedure is due to not knowing the final upload size which this sentence seems to indicate. I would rather use this to bypass proxy max size etc.",
+              "createdAt": "2022-01-31T09:43:27Z",
+              "updatedAt": "2022-01-31T09:43:48Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zygIq",
+          "commit": {
+            "abbreviatedOid": "bd5bc58"
+          },
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-02-01T09:40:56Z",
+          "updatedAt": "2022-02-01T09:40:56Z",
+          "comments": [
+            {
+              "originalPosition": 55,
+              "body": "yeah I totally failed here while rewriting the sentence from a version I started with.",
+              "createdAt": "2022-02-01T09:40:56Z",
+              "updatedAt": "2022-02-01T09:40:56Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4zyhqo",
+          "commit": {
+            "abbreviatedOid": "bd5bc58"
+          },
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-02-01T09:46:26Z",
+          "updatedAt": "2022-02-01T09:46:26Z",
+          "comments": [
+            {
+              "originalPosition": 66,
+              "body": "Good comment. I think the current text on \"advanced use cases\" is not descriptive enough to be useful.\r\n\r\nI don't particularly like the use of chunks in this section of the spec because it might be inferred as chunked encoding. If a client uploads the \"whole file\" even using chunked encoding, proxies can still implement a content size limit.\r\n\r\nI think instead what you're saying is that one use case is: in order to overcome proxy HTTP message content size limits to, clients break a large resource into smaller parts and transfer it over a series of messages from the get go (if they have prior knowledge the action would be supported). I will attempt to rephrase the example to accommodate that.",
+              "createdAt": "2022-02-01T09:46:26Z",
+              "updatedAt": "2022-02-01T09:46:26Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4z8Fs9",
+          "commit": {
+            "abbreviatedOid": "37e3f01"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-02-03T05:54:53Z",
+          "updatedAt": "2022-02-03T05:54:53Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4z-RJd",
+          "commit": {
+            "abbreviatedOid": "37e3f01"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "Wow, thank you very much Lucas! Your changes improve the document immensely!",
+          "createdAt": "2022-02-03T14:56:51Z",
+          "updatedAt": "2022-02-03T14:56:51Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 39,
+      "id": "PR_kwDOEkJfuM4yC9MT",
+      "title": "Be 100% clear that tus is using HTTP",
+      "url": "https://github.com/tus/tus-v2/pull/39",
+      "state": "MERGED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2022-02-03T19:31:41Z",
+      "updatedAt": "2022-02-16T21:09:40Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "26995fd663a5c9d688bcc78c98a09e8385a96020",
+      "headRepository": "LPardue/tus-v2",
+      "headRefName": "lucas/use-http",
+      "headRefOid": "db294bac44c8682dc94324c29de3180d83bef9df",
+      "closedAt": "2022-02-16T21:09:40Z",
+      "mergedAt": "2022-02-16T21:09:40Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "807616c382a114e416a777f2837b14a881337ec5"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4z_x1s",
+          "commit": {
+            "abbreviatedOid": "db294ba"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-02-03T20:10:06Z",
+          "updatedAt": "2022-02-03T20:10:06Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM40BQSS",
+          "commit": {
+            "abbreviatedOid": "db294ba"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-02-04T07:27:47Z",
+          "updatedAt": "2022-02-04T07:27:47Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM40weHW",
+          "commit": {
+            "abbreviatedOid": "db294ba"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-02-16T20:43:20Z",
+          "updatedAt": "2022-02-16T20:43:20Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 41,
+      "id": "PR_kwDOEkJfuM4yDAKU",
+      "title": "Our target venue is httpbis but repo is current home of discussion",
+      "url": "https://github.com/tus/tus-v2/pull/41",
+      "state": "MERGED",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Fixes #40 ",
+      "createdAt": "2022-02-03T19:49:33Z",
+      "updatedAt": "2022-02-07T13:47:24Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "26995fd663a5c9d688bcc78c98a09e8385a96020",
+      "headRepository": "LPardue/tus-v2",
+      "headRefName": "lucas/id-venue",
+      "headRefOid": "eb1aecce3a719706968f6e6c8f0ee6df9967c278",
+      "closedAt": "2022-02-07T13:47:23Z",
+      "mergedAt": "2022-02-07T13:47:23Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "ba3c793a0dafcbb419090cf072cb87095b99da94"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4z_xxW",
+          "commit": {
+            "abbreviatedOid": "eb1aecc"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-02-03T20:09:49Z",
+          "updatedAt": "2022-02-03T20:09:49Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM40BQPx",
+          "commit": {
+            "abbreviatedOid": "eb1aecc"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-02-04T07:27:31Z",
+          "updatedAt": "2022-02-04T07:27:31Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM40IvDu",
+          "commit": {
+            "abbreviatedOid": "eb1aecc"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-02-07T13:47:06Z",
+          "updatedAt": "2022-02-07T13:47:06Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 42,
+      "id": "PR_kwDOEkJfuM4ygRv8",
+      "title": "Upload-Offset in all responses if possible",
+      "url": "https://github.com/tus/tus-v2/pull/42",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "@smatsson @justinruggles ",
+      "createdAt": "2022-02-11T10:10:28Z",
+      "updatedAt": "2022-02-24T10:58:08Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "ba3c793a0dafcbb419090cf072cb87095b99da94",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "response-offset",
+      "headRefOid": "a7f6878c3924ae9af374cfa02e182737830acd01",
+      "closedAt": "2022-02-24T10:58:08Z",
+      "mergedAt": "2022-02-24T10:58:08Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "32d704ad6d0083b7465cef238a0c9b07684568b7"
+      },
+      "comments": [
+        {
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Seems like a fair compromise to what we discussed earlier. \ud83d\udc4d Just to confirm; the Upload-Offset returned by the server is only intended for debugging purposes?",
+          "createdAt": "2022-02-14T13:55:13Z",
+          "updatedAt": "2022-02-14T13:55:13Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Yes, it is purely informational. Should not affect how upload works even if it's completely ignored.",
+          "createdAt": "2022-02-14T19:16:59Z",
+          "updatedAt": "2022-02-14T19:16:59Z"
+        },
+        {
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "LGTM ",
+          "createdAt": "2022-02-15T04:49:45Z",
+          "updatedAt": "2022-02-15T04:49:45Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM40mUQ0",
+          "commit": {
+            "abbreviatedOid": "a7f6878"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-02-15T04:49:57Z",
+          "updatedAt": "2022-02-15T04:49:57Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM41Lyua",
+          "commit": {
+            "abbreviatedOid": "a7f6878"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-02-24T10:57:59Z",
+          "updatedAt": "2022-02-24T10:57:59Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 45,
+      "id": "PR_kwDOEkJfuM40viyV",
+      "title": "Draft for annoucement on mailing list",
+      "url": "https://github.com/tus/tus-v2/pull/45",
+      "state": "CLOSED",
+      "author": "Acconut",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "This is a brief draft to announce our work on tus v2 to the HTTP WG mailing list (https://lists.w3.org/Archives/Public/ietf-http-wg/). It briefly explains what resumable uploads are, points to our draft, and provides some background on tus to show that similar systems have already been widely adopted.\r\n\r\nPlease let me know if you have any feedback regarding it:\r\n- Any other points that should be mentioned?\r\n- Should anything be stressed or emphasized more?\r\n- Should anything be left out?\r\n- Is the style of the writing appropriate?\r\n\r\nFixes https://github.com/tus/tus-v2/issues/44",
+      "createdAt": "2022-03-21T14:05:37Z",
+      "updatedAt": "2022-04-01T09:51:48Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "6b86a8a5c187ad2910162288d951079a3273cdbd",
+      "headRepository": "tus/tus-v2",
+      "headRefName": "mail-draft",
+      "headRefOid": "47a024a3b48697fb5f8bb3f35fbf8a51ea988432",
+      "closedAt": "2022-04-01T09:51:48Z",
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Thank you all very much for your feedback!",
+          "createdAt": "2022-04-01T09:45:14Z",
+          "updatedAt": "2022-04-01T09:45:14Z"
+        },
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "I sent out the mail to the list and got an automated response that it will be reviewed manually as it is my first entry in the mailing list. I will keep you updated.\r\n\r\nGoing to close this PR, as the matter is done.",
+          "createdAt": "2022-04-01T09:51:48Z",
+          "updatedAt": "2022-04-01T09:51:48Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM42nWYj",
+          "commit": {
+            "abbreviatedOid": "cc33207"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "Looks good! I would mention that there is a difference between this draft and the current version of the protocol in tus.io. Maybe say this is a new version of the tus protocol?",
+          "createdAt": "2022-03-21T19:54:34Z",
+          "updatedAt": "2022-03-21T19:54:34Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM42pMIv",
+          "commit": {
+            "abbreviatedOid": "cc33207"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "Very nice @Acconut! :) To me we seem to tick all the boxes. Can't really answer for the last of your questions though but from other messages to the mailing list I've seen it seems appropriate. Maybe @LPardue have more insights?",
+          "createdAt": "2022-03-22T07:31:48Z",
+          "updatedAt": "2022-03-22T07:34:09Z",
+          "comments": [
+            {
+              "originalPosition": 7,
+              "body": "I think it's missing an \"in\": \"We are interested IN any feedback on this...\"",
+              "createdAt": "2022-03-22T07:31:48Z",
+              "updatedAt": "2022-03-22T07:34:09Z"
+            },
+            {
+              "originalPosition": 13,
+              "body": "Minor: The word \"so\" might not be needed here. Seems redundant. ",
+              "createdAt": "2022-03-22T07:32:59Z",
+              "updatedAt": "2022-03-22T07:34:09Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM42xJ9u",
+          "commit": {
+            "abbreviatedOid": "cc33207"
+          },
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-03-23T14:16:53Z",
+          "updatedAt": "2022-03-23T14:22:27Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "I would reorder these a bit to say something along the lines of \r\n\r\n\"We are all familiar with connectivity disruptions affecting our Internet activities. One example, is when a large file download is interrupted; say a 100 MB file download encounters a network loss after the client receives 70 MB. Fortunately, resumable HTTP downloads using range requests are a widely deployed standard feature that allows clients to fetch the remaining 30 MB only, saving time and resources for both endpoints. However, in the opposite direction, there is not a standard convention for resuming HTTP uploads. \r\n\r\nAcross the HTTP ecosystem there are several different approaches to providing resumable uploads. We are aware of at least one attempt to try and standardize an approach [1], but to our knowledge none have succeeded in being adopted and driven to conclusion.",
+              "createdAt": "2022-03-23T14:16:53Z",
+              "updatedAt": "2022-03-23T14:22:27Z"
+            },
+            {
+              "originalPosition": 7,
+              "body": "Following on from my above suggestion, I would tweak this para to say\r\n\r\n\"We believe resumable uploads are a common problem and that there is value in a standard resumable upload approach. We've been working on a document [2] [3] that uses HTTP to solve what we believe to be the core problem set, while also allowing for extended use cases. We are bringing this to the list to understand if there is interest in the working group to solve the problem, and whether our document is a good basis for a solution.",
+              "createdAt": "2022-03-23T14:22:24Z",
+              "updatedAt": "2022-03-23T14:22:27Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 46,
+      "id": "PR_kwDOEkJfuM43JoqE",
+      "title": "Split Upload Transfer Procedure into creation and appending procedures",
+      "url": "https://github.com/tus/tus-v2/pull/46",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2022-05-02T07:08:22Z",
+      "updatedAt": "2022-06-16T21:02:41Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "6b86a8a5c187ad2910162288d951079a3273cdbd",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "split-procedures",
+      "headRefOid": "9b085066feff666d274aecb1d3dce3eb75c1a23b",
+      "closedAt": "2022-06-16T20:59:23Z",
+      "mergedAt": "2022-06-16T20:59:23Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "f2e38323a53b4fbb94f96f7a357a80f9e6ea21e9"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM45O9Tx",
+          "commit": {
+            "abbreviatedOid": "0496ff3"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-05-03T11:21:36Z",
+          "updatedAt": "2022-05-03T11:29:05Z",
+          "comments": [
+            {
+              "originalPosition": 203,
+              "body": "Typo? Should this be PATCH method?",
+              "createdAt": "2022-05-03T11:21:36Z",
+              "updatedAt": "2022-05-03T11:29:05Z"
+            },
+            {
+              "originalPosition": 207,
+              "body": "I'm not saying it's wrong but isn't this kind of strange when considering that we mention \"Content-Type\" as metadata earlier in the draft? Content-Type is most likely automatically added when appending data by the underlying http lib.",
+              "createdAt": "2022-05-03T11:22:49Z",
+              "updatedAt": "2022-05-03T11:29:05Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM45R9ej",
+          "commit": {
+            "abbreviatedOid": "0496ff3"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-05-03T20:23:30Z",
+          "updatedAt": "2022-05-03T20:23:30Z",
+          "comments": [
+            {
+              "originalPosition": 203,
+              "body": "Fixed",
+              "createdAt": "2022-05-03T20:23:30Z",
+              "updatedAt": "2022-05-03T20:23:30Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM45R9od",
+          "commit": {
+            "abbreviatedOid": "0496ff3"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-05-03T20:23:50Z",
+          "updatedAt": "2022-05-03T20:23:50Z",
+          "comments": [
+            {
+              "originalPosition": 207,
+              "body": "I removed the client-side requirement",
+              "createdAt": "2022-05-03T20:23:50Z",
+              "updatedAt": "2022-05-03T20:23:50Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM45aOLF",
+          "commit": {
+            "abbreviatedOid": "057eb33"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-05-05T10:47:32Z",
+          "updatedAt": "2022-05-05T10:47:32Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 47,
+      "id": "PR_kwDOEkJfuM45hXdJ",
+      "title": "fix: typo",
+      "url": "https://github.com/tus/tus-v2/pull/47",
+      "state": "MERGED",
+      "author": "nhedger",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Hi,\r\n\r\nThis PR fixes a typo in the `3.1.  Example 1: Complete upload of file with known size` section.\r\n\r\nCheers.",
+      "createdAt": "2022-06-12T17:08:34Z",
+      "updatedAt": "2022-06-16T20:18:28Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "6b86a8a5c187ad2910162288d951079a3273cdbd",
+      "headRepository": "nhedger/tus-v2",
+      "headRefName": "fix/typo-upload-overview-example-1",
+      "headRefOid": "71181747a840a9063495600159fec0ca4d23f3a3",
+      "closedAt": "2022-06-16T19:54:11Z",
+      "mergedAt": "2022-06-16T19:54:11Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "87e46c9d5fc2f690a2460ee352447b8cbe994c2d"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM470oaj",
+          "commit": {
+            "abbreviatedOid": "7118174"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-06-12T18:21:13Z",
+          "updatedAt": "2022-06-12T18:21:13Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM48LYzg",
+          "commit": {
+            "abbreviatedOid": "7118174"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "Thank you!",
+          "createdAt": "2022-06-16T19:53:49Z",
+          "updatedAt": "2022-06-16T19:53:49Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 49,
+      "id": "PR_kwDOEkJfuM45wIkf",
+      "title": "Add request identification section",
+      "url": "https://github.com/tus/tus-v2/pull/49",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "This is based on the split procedure change in PR #46\r\n\r\nHopefully resolves #48",
+      "createdAt": "2022-06-16T06:09:32Z",
+      "updatedAt": "2022-06-16T21:02:36Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "f2e38323a53b4fbb94f96f7a357a80f9e6ea21e9",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "request-identification",
+      "headRefOid": "cbbd28b0d26c6afb3ac38260237fcd33d312f5ca",
+      "closedAt": "2022-06-16T21:01:23Z",
+      "mergedAt": "2022-06-16T21:01:23Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "72784b09c082b056c724b396d2793fbe93b893fc"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM48Lppq",
+          "commit": {
+            "abbreviatedOid": "cbbd28b"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "Good idea!",
+          "createdAt": "2022-06-16T21:01:15Z",
+          "updatedAt": "2022-06-16T21:01:15Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 50,
+      "id": "PR_kwDOEkJfuM457c_3",
+      "title": "Clients should not auto retry 404",
+      "url": "https://github.com/tus/tus-v2/pull/50",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "This prevents accidental violation of request idempotence.",
+      "createdAt": "2022-06-20T08:09:04Z",
+      "updatedAt": "2022-07-24T15:14:13Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "72784b09c082b056c724b396d2793fbe93b893fc",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "retry-404",
+      "headRefOid": "235ddcfca68cb99d0f17da827bb469d8bfe36929",
+      "closedAt": "2022-07-20T07:47:43Z",
+      "mergedAt": "2022-07-20T07:47:43Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "f22c49b9ba0108cc16764661fbb4f5dbf7fdf0d3"
+      },
+      "comments": [
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Could you explain the motivation behind this change? In many tus v1 client we have explicitly implemented retries for 404s: If the client receives a 404 during the Upload Transfer or Offset Retrieve Procedure, it will assume that the upload resource is not longer available. The client will then try to create a new upload resource and start uploading the file from scratch (unless this has been explicitly disabled in the client's config).\r\n\r\n",
+          "createdAt": "2022-07-19T15:01:39Z",
+          "updatedAt": "2022-07-19T15:01:39Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "The situation I'm thinking about is: if the client is doing a non-idempotent POST, the entire request was sent but connection dropped before response arrived. Server processed the request, then later forgot about the token. Now the client tries to resume, if it retries 404, it is violating the semantics.\r\n\r\nThere is also ambiguity of whether we should use Upload Creation Procedure or Upload Appending Procedure. It would be additional complexity on the client if we force you to do creation again, but appending does not carry metadata which might be important for the upload.\r\n\r\nIf the server wants the client to upload from the beginning, it can always send \"Upload-Offset: 0\". Otherwise, failing the upload and letting the application apply their retry logic seems the safest.",
+          "createdAt": "2022-07-19T17:10:09Z",
+          "updatedAt": "2022-07-19T17:10:09Z"
+        },
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Yes, I see the issue with automatically retrying non-idempotent requests. In such cases, it's possibly best to let the end user decide if they want to start a new upload, e.g. through a configuration flag.\r\n\r\nLet's add this change to the spec!",
+          "createdAt": "2022-07-20T07:47:25Z",
+          "updatedAt": "2022-07-20T07:47:25Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4-Qupq",
+          "commit": {
+            "abbreviatedOid": "235ddcf"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-07-20T07:47:36Z",
+          "updatedAt": "2022-07-20T07:47:36Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 54,
+      "id": "PR_kwDOEkJfuM47XvGB",
+      "title": "Clarify invalid offset and backtracking",
+      "url": "https://github.com/tus/tus-v2/pull/54",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Resolves #52 and #53",
+      "createdAt": "2022-07-14T00:44:56Z",
+      "updatedAt": "2022-07-25T14:35:50Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "72784b09c082b056c724b396d2793fbe93b893fc",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "invalid-offset",
+      "headRefOid": "611c36260ea90eef2abc25ae27257af00e829dba",
+      "closedAt": "2022-07-25T08:19:05Z",
+      "mergedAt": "2022-07-25T08:19:05Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "b656e0f55195541ad7521ae9b12319eb59a94bce"
+      },
+      "comments": [
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "This was brought up by @gregw on the mailing list. I can't think of a use case, but I don't see much harm in allowing it either. We can definitely revisit this if you think it adds complexity to the client, or if there are any other reasons. What does a typical tus-v1 client do in this situation?",
+          "createdAt": "2022-07-15T07:14:31Z",
+          "updatedAt": "2022-07-15T07:14:31Z"
+        },
+        {
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I can't 100% guarantee it but I would think that the tus 1.0 client would just continue from the offset provided by the server. I don't see any harm in allowibg it but I'm just wondering when this could happen and for what reason. If the client sends 100 bytes and the server returns an offset of 200 something has obviously gone very wrong and the file is most likely corrupt or at the very least not safe to resume.",
+          "createdAt": "2022-07-16T11:55:14Z",
+          "updatedAt": "2022-07-16T11:55:14Z"
+        },
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "> What does a typical tus-v1 client do in this situation?\r\n\r\nI answered a bit in https://github.com/tus/tus-v2/issues/52#issuecomment-1189134243, but can elaborate a bit more here: In tus v1 it is not intended that the server skips forward (i think it is not explicitly mentioned but implicitly not allowed). As such, clients may rely on on this property in their implementation. For example, tus-js-client could handle forward jumps for uploads from disk files, but it currently does not support it when uploading from a streaming data source, e.g. a live webcam video. It may or may not error out (haven't test that yet), but I would assume it breaks.\r\n\r\nGeneral, I prefer simplicity when looking at the Upload-Offset header: I think it should only ever increase and only by the amount that the server receives from the client, i.e. not seeks backwards and not jumps forward. This allows clients to be keep simpler.",
+          "createdAt": "2022-07-19T15:29:09Z",
+          "updatedAt": "2022-07-19T15:29:09Z"
+        },
+        {
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I also don't find a compelling use case for going forward. Yes, skipping ahead in dynamically generated content would be surprising. I think we can reword it so that the client is free to reject these offsets to simplify the implementation.",
+          "createdAt": "2022-07-19T20:26:00Z",
+          "updatedAt": "2022-07-19T20:26:00Z"
+        },
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "> I think we can reword it so that the client is free to reject these offsets to simplify the implementation.\r\n\r\nLet's do this. If servers want to skip ahead for some reason in the future, then clients should already be able to handle it or have explicit logic to error out.",
+          "createdAt": "2022-07-20T07:57:51Z",
+          "updatedAt": "2022-07-20T07:57:51Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM49-zIb",
+          "commit": {
+            "abbreviatedOid": "c75c3c1"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "Is there an example use case for when the server returns a larger value than what has been sent by the client?",
+          "createdAt": "2022-07-15T06:54:31Z",
+          "updatedAt": "2022-07-15T06:54:31Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4-hx6u",
+          "commit": {
+            "abbreviatedOid": "611c362"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-07-25T08:18:58Z",
+          "updatedAt": "2022-07-25T08:18:58Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 55,
+      "id": "PR_kwDOEkJfuM47XvI0",
+      "title": "Clarify not supporting parallel chunked uploads",
+      "url": "https://github.com/tus/tus-v2/pull/55",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Resolves #51 ",
+      "createdAt": "2022-07-14T00:45:13Z",
+      "updatedAt": "2022-07-24T15:13:58Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "72784b09c082b056c724b396d2793fbe93b893fc",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "no-parallel",
+      "headRefOid": "0cad2c274328c4a9759cd257aaaffd1ac13a173e",
+      "closedAt": "2022-07-19T14:38:38Z",
+      "mergedAt": "2022-07-19T14:38:38Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "b7bb7a52b0326d80633c5b657df45b553b5d8347"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM49-y3Q",
+          "commit": {
+            "abbreviatedOid": "0cad2c2"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-07-15T06:53:19Z",
+          "updatedAt": "2022-07-15T06:53:19Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4-M2_x",
+          "commit": {
+            "abbreviatedOid": "0cad2c2"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-07-19T14:38:29Z",
+          "updatedAt": "2022-07-19T14:38:29Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 56,
+      "id": "PR_kwDOEkJfuM47YYEo",
+      "title": "Remove upload-offset in creation examples",
+      "url": "https://github.com/tus/tus-v2/pull/56",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2022-07-14T05:57:21Z",
+      "updatedAt": "2022-07-24T15:14:07Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "72784b09c082b056c724b396d2793fbe93b893fc",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "zero-offset",
+      "headRefOid": "a20e8b65fac5a817c098d5bb4022e2d32b58525b",
+      "closedAt": "2022-07-19T14:45:14Z",
+      "mergedAt": "2022-07-19T14:45:14Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "0c63dd9ec5c91ffb1f3facd83613930a08808bdf"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM497PsM",
+          "commit": {
+            "abbreviatedOid": "a20e8b6"
+          },
+          "author": "justinruggles",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-07-14T14:12:03Z",
+          "updatedAt": "2022-07-14T14:12:03Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM49-yvW",
+          "commit": {
+            "abbreviatedOid": "a20e8b6"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-07-15T06:52:45Z",
+          "updatedAt": "2022-07-15T06:52:45Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4-M5v9",
+          "commit": {
+            "abbreviatedOid": "a20e8b6"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-07-19T14:45:07Z",
+          "updatedAt": "2022-07-19T14:45:07Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 57,
+      "id": "PR_kwDOEkJfuM47_wCu",
+      "title": "Add \"suggested value\" in the IANA registration section",
+      "url": "https://github.com/tus/tus-v2/pull/57",
+      "state": "MERGED",
+      "author": "guoye-zhang",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2022-07-24T15:24:45Z",
+      "updatedAt": "2022-07-25T14:35:57Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "f22c49b9ba0108cc16764661fbb4f5dbf7fdf0d3",
+      "headRepository": "guoye-zhang/tus-v2",
+      "headRefName": "iana-104",
+      "headRefOid": "49cce1c9cd2e3faab6f914782ca2159304c955d9",
+      "closedAt": "2022-07-25T07:41:04Z",
+      "mergedAt": "2022-07-25T07:41:04Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "940040c5b2353b7d37e5363af17083700dd2c4ea"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM4-gWxN",
+          "commit": {
+            "abbreviatedOid": "49cce1c"
+          },
+          "author": "smatsson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-07-24T17:31:39Z",
+          "updatedAt": "2022-07-24T17:31:39Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM4-hmZm",
+          "commit": {
+            "abbreviatedOid": "49cce1c"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-07-25T07:40:55Z",
+          "updatedAt": "2022-07-25T07:40:55Z",
+          "comments": []
+        }
+      ]
+    }
+  ]
+}

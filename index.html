@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>tus/tus-v2 master preview</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <style type="text/css">/*<![CDATA[*/
+      body { font-family: "Helvetica Neue","Open Sans", Helvetica, Calibri,sans-serif; }
+      h1, h2, td { font-family: "Helvetica Neue", "Roboto Condensed", "Open Sans", Helvetica, Calibri, sans-serif; }
+      h1 { font-size: 20px; } h2 { font-size: 16px; }
+      table { margin: 5px 10px; border-collapse: collapse; }
+      th, td { font-weight: normal; text-align: left; padding: 2px 5px; }
+      a:link { color: #000; } a:visited { color: #00a; }
+    /*]]>*/</style>
+  </head>
+  <body>
+    <h1>Editor's drafts for master branch of <a href="https://github.com/tus/tus-v2">tus/tus-v2</a></h1>
+    <p>View <a href="issues.html">saved issues</a>, or the latest GitHub <a href="https://github.com/tus/tus-v2/issues">issues</a> and <a href="https://github.com/tus/tus-v2/pulls">pull requests</a> in the <a href="https://github.com/tus/tus-v2">repo</a>.</p>
+    <table id="branch-master">
+      <tr>
+        <td><a href="./draft-tus-httpbis-resumable-uploads-protocol.html" class="html draft-tus-httpbis-resumable-uploads-protocol" title="tus - Resumable Uploads Protocol (HTML)">Resumable Uploads</a></td>
+        <td><a href="./draft-tus-httpbis-resumable-uploads-protocol.txt" class="txt draft-tus-httpbis-resumable-uploads-protocol" title="tus - Resumable Uploads Protocol (Text)">plain text</a></td>
+        <td><a href="https://datatracker.ietf.org/doc/draft-tus-httpbis-resumable-uploads-protocol" class="dt draft-tus-httpbis-resumable-uploads-protocol" title="Datatracker for draft-tus-httpbis-resumable-uploads-protocol">datatracker</a></td>
+        <td><a href="https://www.ietf.org/rfcdiff?url1=draft-tus-httpbis-resumable-uploads-protocol&amp;url2=https://tus.github.io/tus-v2/draft-tus-httpbis-resumable-uploads-protocol.txt" class="diff draft-tus-httpbis-resumable-uploads-protocol">diff with last submission</a></td>
+        <td></td>
+      </tr>
+    </table>
+    <h2>Preview for branch <a href="draft-tus-httpbis-resumable-uploads-protocol-02">draft-tus-httpbis-resumable-uploads-protocol-02</a></h2>
+    <table id="branch-draft-tus-httpbis-resumable-uploads-protocol-02">
+      <tr>
+        <td><a href="draft-tus-httpbis-resumable-uploads-protocol-02/draft-tus-httpbis-resumable-uploads-protocol.html" class="html draft-tus-httpbis-resumable-uploads-protocol" title="tus - Resumable Uploads Protocol (HTML)">Resumable Uploads</a></td>
+        <td><a href="draft-tus-httpbis-resumable-uploads-protocol-02/draft-tus-httpbis-resumable-uploads-protocol.txt" class="txt draft-tus-httpbis-resumable-uploads-protocol" title="tus - Resumable Uploads Protocol (Text)">plain text</a></td>
+        <td><a href="https://www.ietf.org/rfcdiff?url1=https://tus.github.io/tus-v2/draft-tus-httpbis-resumable-uploads-protocol.txt&amp;url2=https://tus.github.io/tus-v2/draft-tus-httpbis-resumable-uploads-protocol-02/draft-tus-httpbis-resumable-uploads-protocol-02/draft-tus-httpbis-resumable-uploads-protocol.txt" class="diff draft-tus-httpbis-resumable-uploads-protocol">diff with master</a></td>
+      </tr>
+    </table>
+    <script>
+window.onload = function() {
+  var referrer_branch = 'master';
+  // e.g., "https://github.com/user/repo/tree/master"
+  var chunks = document.referrer.split("/");
+  if (chunks[2] === 'github.com' && chunks[5] === 'tree') {
+    referrer_branch = chunks[6];
+  }
+  let branch = document.querySelector('#branch-' + referrer_branch);
+  let h = document.location.hash.substring(1);
+  if (h === 'show') {
+    document.location.hash = '#' + branch.id;
+  } else if (branch && h.startsWith('go')) {
+    let e = branch.querySelector(h.substring(2));
+    if (e && e.href) {
+      document.location = e.href;
+    }
+  }
+};
+    </script>
+  </body>
+</html>
