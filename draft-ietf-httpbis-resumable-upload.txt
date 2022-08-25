@@ -2,20 +2,17 @@
 
 
 
-HTTP                                                           M. Kleidl
+HTTP                                                      M. Kleidl, Ed.
 Internet-Draft                                           Transloadit Ltd
-Intended status: Standards Track                                J. Mehta
-Expires: 26 January 2023                                        G. Zhang
-                                                              Apple Inc.
-                                                               L. Pardue
+Intended status: Standards Track                           G. Zhang, Ed.
+Expires: 26 February 2023                                     Apple Inc.
+                                                          L. Pardue, Ed.
                                                               Cloudflare
-                                                              S. Matsson
-                                                               JellyHive
-                                                            25 July 2022
+                                                          25 August 2022
 
 
                     tus - Resumable Uploads Protocol
-          draft-tus-httpbis-resumable-uploads-protocol-latest
+               draft-ietf-httpbis-resumable-upload-latest
 
 Abstract
 
@@ -29,12 +26,21 @@ Abstract
    mechanism that supports resumable uploads from client to server using
    HTTP.
 
-Discussion Venues
+About This Document
 
    This note is to be removed before publishing as an RFC.
 
-   Discussion of this document takes place on the tus-v2 GitHub
-   repository at https://github.com/tus/tus-v2.
+   Status information for this document may be found at
+   https://datatracker.ietf.org/doc/draft-ietf-httpbis-resumable-
+   upload/.
+
+   Discussion of this document takes place on the HTTP Working Group
+   mailing list (mailto:ietf-http-wg@w3.org), which is archived at
+   https://lists.w3.org/Archives/Public/ietf-http-wg/.  Working Group
+   information can be found at https://httpwg.org/.
+
+   Source for this draft and an issue tracker can be found at
+   https://github.com/httpwg/http-extensions/labels/resumable-upload.
 
 Status of This Memo
 
@@ -51,7 +57,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 26 January 2023.
+   This Internet-Draft will expire on 26 February 2023.
 
 Copyright Notice
 
@@ -792,7 +798,10 @@ A.2.  Since draft-tus-httpbis-resumable-uploads-protocol-00
 
 Acknowledgments
 
-   TODO acknowledge.
+   This document is based on an Internet-Draft specification written by
+   Jiten Mehta, Stefan Matsson, and the authors of this document.
+
+   TODO: more acknowledgements.
 
 Appendix
 
@@ -946,26 +955,16 @@ FAQ
 
 Authors' Addresses
 
-   Marius Kleidl
+   Marius Kleidl (editor)
    Transloadit Ltd
    Email: marius@transloadit.com
 
 
-   Jiten Mehta
-   Apple Inc.
-   Email: jmehta@apple.com
-
-
-   Guoye Zhang
+   Guoye Zhang (editor)
    Apple Inc.
    Email: guoye_zhang@apple.com
 
 
-   Lucas Pardue
+   Lucas Pardue (editor)
    Cloudflare
    Email: lucaspardue.24.7@gmail.com
-
-
-   Stefan Matsson
-   JellyHive
-   Email: s.matsson@gmail.com
