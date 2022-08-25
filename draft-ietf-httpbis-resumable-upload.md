@@ -1,7 +1,7 @@
 ---
 title: tus - Resumable Uploads Protocol
 abbrev: Resumable Uploads
-docname: draft-tus-httpbis-resumable-uploads-protocol-latest
+docname: draft-ietf-httpbis-resumable-upload-latest
 category: std
 
 ipr: trust200902
@@ -13,32 +13,35 @@ stand_alone: yes
 smart_quotes: no
 pi: [toc, sortrefs, symrefs]
 
+venue:
+  group: HTTP
+  type: Working Group
+  home: https://httpwg.org/
+  mail: ietf-http-wg@w3.org
+  arch: https://lists.w3.org/Archives/Public/ietf-http-wg/
+  repo: https://github.com/httpwg/http-extensions/labels/resumable-upload
+github-issue-label: resumable-upload
+
 author:
   -
     ins: M. Kleidl
     name: Marius Kleidl
+    role: editor
     organization: Transloadit Ltd
     email: marius@transloadit.com
   -
-    ins: J. Mehta
-    name: Jiten Mehta
-    organization: Apple Inc.
-    email: jmehta@apple.com
-  -
     ins: G. Zhang
     name: Guoye Zhang
+    role: editor
     organization: Apple Inc.
     email: guoye_zhang@apple.com
   -
     ins: L. Pardue
     name: Lucas Pardue
+    role: editor
     organization: Cloudflare
     email: lucaspardue.24.7@gmail.com
-  -
-    ins: S. Matsson
-    name: Stefan Matsson
-    organization: JellyHive
-    email: s.matsson@gmail.com
+
 
 normative:
   RFC2119:
@@ -470,7 +473,9 @@ Specification: This document
 # Acknowledgments
 {:numbered="false"}
 
-TODO acknowledge.
+This document is based on an Internet-Draft specification written by Jiten Mehta, Stefan Matsson, and the authors of this document.
+
+TODO: more acknowledgements.
 
 # Appendix
 {:numbered="false"}
