@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2022-07-26T01:08:54.475061+00:00",
+  "timestamp": "2022-08-25T01:16:56.103619+00:00",
   "repo": "tus/tus-v2",
   "labels": [
     {
@@ -3578,6 +3578,66 @@
           "body": "",
           "createdAt": "2022-07-25T07:40:55Z",
           "updatedAt": "2022-07-25T07:40:55Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 58,
+      "id": "PR_kwDOEkJfuM49wAQc",
+      "title": "Prepare for adoption and migration to http-extensions repo",
+      "url": "https://github.com/tus/tus-v2/pull/58",
+      "state": "OPEN",
+      "author": "LPardue",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The I-D has been adopted by the HTTP WG. The chairs gave us instructions for migration to https://github.com/httpwg/http-extensions: nominate editors and rename the draft filename.\r\n\r\nThis change reflects into metadata the outcome of those decisions.\r\n\r\nNo content changes have occured. Those should be deferred until the migration has completed. Any future changes should be tracked at the http-extensions repo.",
+      "createdAt": "2022-08-24T21:13:15Z",
+      "updatedAt": "2022-08-24T21:43:18Z",
+      "baseRepository": "tus/tus-v2",
+      "baseRefName": "master",
+      "baseRefOid": "ca098b4f577551a3ddf2ca19c99451e7da7f87f0",
+      "headRepository": "LPardue/tus-v2",
+      "headRefName": "prepare-for-wg-migration",
+      "headRefOid": "7167b0a23952fcd053bd4c1027064a34a10b8dba",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOEkJfuM5ApHTc",
+          "commit": {
+            "abbreviatedOid": "7167b0a"
+          },
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2022-08-24T21:14:21Z",
+          "updatedAt": "2022-08-24T21:14:22Z",
+          "comments": [
+            {
+              "originalPosition": 9,
+              "body": "These three are not strictly necessary, but might help maintain consistency. The diff will be broken until draft-ietf-httpbis-resumable-upload-00 is uploaded to the datatracker.",
+              "createdAt": "2022-08-24T21:14:21Z",
+              "updatedAt": "2022-08-24T21:14:22Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOEkJfuM5ApN2K",
+          "commit": {
+            "abbreviatedOid": "7167b0a"
+          },
+          "author": "guoye-zhang",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-08-24T21:43:18Z",
+          "updatedAt": "2022-08-24T21:43:18Z",
           "comments": []
         }
       ]
