@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2022-08-25T01:16:56.103619+00:00",
+  "timestamp": "2022-08-28T01:10:46.818971+00:00",
   "repo": "tus/tus-v2",
   "labels": [
     {
@@ -3587,25 +3587,42 @@
       "id": "PR_kwDOEkJfuM49wAQc",
       "title": "Prepare for adoption and migration to http-extensions repo",
       "url": "https://github.com/tus/tus-v2/pull/58",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "LPardue",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "The I-D has been adopted by the HTTP WG. The chairs gave us instructions for migration to https://github.com/httpwg/http-extensions: nominate editors and rename the draft filename.\r\n\r\nThis change reflects into metadata the outcome of those decisions.\r\n\r\nNo content changes have occured. Those should be deferred until the migration has completed. Any future changes should be tracked at the http-extensions repo.",
       "createdAt": "2022-08-24T21:13:15Z",
-      "updatedAt": "2022-08-24T21:43:18Z",
+      "updatedAt": "2022-08-25T11:15:29Z",
       "baseRepository": "tus/tus-v2",
       "baseRefName": "master",
       "baseRefOid": "ca098b4f577551a3ddf2ca19c99451e7da7f87f0",
       "headRepository": "LPardue/tus-v2",
       "headRefName": "prepare-for-wg-migration",
       "headRefOid": "7167b0a23952fcd053bd4c1027064a34a10b8dba",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
-      "comments": [],
+      "closedAt": "2022-08-25T10:24:13Z",
+      "mergedAt": "2022-08-25T10:24:13Z",
+      "mergedBy": "Acconut",
+      "mergeCommit": {
+        "oid": "ce539e067aaf12d3768fb342c6d6c734666b2c70"
+      },
+      "comments": [
+        {
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "body": "Thank you very much Lucas! What are the next steps? I assume adding the draft to the http-extensions repo as outlined in https://github.com/httpwg/http-extensions/blob/main/SUBMITTING.md#starting-a-new-draft? Does the WG use PR for that?",
+          "createdAt": "2022-08-25T10:27:08Z",
+          "updatedAt": "2022-08-25T10:27:08Z"
+        },
+        {
+          "author": "LPardue",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "> What are the next steps? I assume adding the draft to the http-extensions repo as outlined in https://github.com/httpwg/http-extensions/blob/main/SUBMITTING.md#starting-a-new-draft? Does the WG use PR for that?\r\n\r\nYes. Assuming you have the correct rights to the http-extensions repo, I would suggest creating a branch off main in that repo like `acconut/add-resumable-upload` that simply adds `draft-ietf-httpbis-resumable-upload.md` to the root folder there. The open up a PR and check CI and the chairs are happy.",
+          "createdAt": "2022-08-25T11:15:28Z",
+          "updatedAt": "2022-08-25T11:15:28Z"
+        }
+      ],
       "reviews": [
         {
           "id": "PRR_kwDOEkJfuM5ApHTc",
@@ -3638,6 +3655,19 @@
           "body": "",
           "createdAt": "2022-08-24T21:43:18Z",
           "updatedAt": "2022-08-24T21:43:18Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOEkJfuM5Arrmx",
+          "commit": {
+            "abbreviatedOid": "7167b0a"
+          },
+          "author": "Acconut",
+          "authorAssociation": "MEMBER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-08-25T10:24:01Z",
+          "updatedAt": "2022-08-25T10:24:01Z",
           "comments": []
         }
       ]
