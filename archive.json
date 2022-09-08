@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2022-08-28T01:10:46.818971+00:00",
+  "timestamp": "2022-09-08T01:12:57.610053+00:00",
   "repo": "tus/tus-v2",
   "labels": [
     {
@@ -594,6 +594,22 @@
           "updatedAt": "2022-07-21T05:05:57Z"
         }
       ]
+    },
+    {
+      "number": 59,
+      "id": "I_kwDOEkJfuM5RW5i9",
+      "title": "OWASP Considerations",
+      "url": "https://github.com/tus/tus-v2/issues/59",
+      "state": "OPEN",
+      "author": "marlon-tucker",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Hello\r\n\r\nI'm currently attempting to deploy a TUS enabled application into Azure behind a WAF and am running into various issues with how the default OWASP rules are detecting the TUS protocol.  I will be referencing Azure here, but under the hood Azure appears to be using ModSecurity along with the standard OWASP CoreRuleSets. Other cloud providers will all have very similar implementations.\r\n\r\n## Request Body Size Limits\r\n\r\nThe default policy for azure is to limit request bodies to 128kb and file uploads to 100mb.  This limit comes into effect if the WAF is configured to do request body scanning.\r\n\r\nFile uploads are detected if the request is a `multipart/form-data` with a part that has a filename attribute. \r\n\r\nAzure does have a way to increase these limits, but it's an additional cost feature\r\n\r\nTUS uploads files in such a way they get treated as normal requests, and as such they are limited to a chunk size of 128kb.. It's not the end of the world, but equally, not very efficient either.\r\n\r\n\r\n## Content Type for uploads\r\n\r\nTUS uploads files using the `application/offset+octet-stream`, which is not part of the default OWASP ruleset for allowed content types. \r\n\r\nhttps://github.com/coreruleset/coreruleset/blob/v3.1.2/crs-setup.conf.example#L390-L400\r\n\r\n`application/octet-stream` is in the default list of allowed content types. \r\n\r\nAs far as I can tell, Azure only allows this rule to be enabled or disabled, we can't update the underlying regex string. Personally I am of the opinion limiting content types to an arbitrary subset has limited security benefit but non the less it is what it is.\r\n\r\n----\r\n\r\n\r\nI accept that changing the TUS protocol so it doesn't fall afoul of these detections is going to be near impossible at this stage, however I wanted to shine a light on the issues so they are at least known about and can be taken into consideration in the future. \r\n\r\n",
+      "createdAt": "2022-09-07T17:07:15Z",
+      "updatedAt": "2022-09-07T17:07:15Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
