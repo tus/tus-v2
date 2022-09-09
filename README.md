@@ -1,5 +1,7 @@
 # tus - Resumable Uploads Protocol
 
+> **Notice:** The HTTP Working Group has decided to adopt this draft. Therefore, the active developement and discussion of resumable uploads has moved from this repository to [github.com/httpwg/http-extensions/](https://github.com/httpwg/http-extensions/), where you can open issues and join the discussion. The latest draft can be found [here](https://github.com/httpwg/http-extensions/blob/main/draft-ietf-httpbis-resumable-upload.md). Please use these resources. This repository has been archived.
+
 This is the working area for the IETF [RESUMABLE Working Group](https://datatracker.ietf.org/wg/resumable/documents/) Internet-Draft, "tus - Resumable Uploads Protocol".
 
 * [Editor's Copy](https://tus.github.io/tus-v2/#go.draft-ietf-httpbis-resumable-upload.html)
